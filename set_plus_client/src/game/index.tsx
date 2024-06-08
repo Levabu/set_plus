@@ -2,6 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { features } from '../lib/features';
 import Game from '../lib/Game';
+import Card from './Card';
 
 export default function GameWindow() {
   const gameFeatures = [
@@ -18,22 +19,23 @@ export default function GameWindow() {
   return (
     <Wrapper>
       Game
-      <ul>
+      <Cards>
         {game.deck.map((card, index) => (
           <li key={index}>
-            {game.features.map((feature) => (
-              <span key={feature}>
-                {feature}: {String(card[feature])}
-              </span>
-            ))}
-            <br/>
+            <Card card={card} optionsNumber={optionsNumber} />
           </li>
         ))}
-      </ul>
+      </Cards>
     </Wrapper>
   )
 }
 
 const Wrapper = styled.div`
+  padding: 1rem 2rem;
+`;
 
+const Cards = styled.ul`
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
 `;

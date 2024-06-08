@@ -18,6 +18,7 @@ export default function Page({children}: { children: ReactNode}) {
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
+  max-width: 100vw;
   height: 100vh;
 `;
 

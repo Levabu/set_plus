@@ -3,7 +3,7 @@ import styled from "styled-components"
 export default function Footer() {
   return (
     <Wrapper>
-      Navbar
+      Footer
     </Wrapper>
   )
 }
