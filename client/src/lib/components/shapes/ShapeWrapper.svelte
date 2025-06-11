@@ -70,7 +70,6 @@
 
       <pattern id={`${color}_dotted`} width="10" height="10" patternUnits="userSpaceOnUse">
         <circle cx="5" cy="5" r="2" fill={COLORS[color as ColorKey]}/>
-        <circle cx="5" cy="5" r="1" fill="white"/>
       </pattern>
     {/each}
   </defs>
