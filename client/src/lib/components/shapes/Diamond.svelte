@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { Color } from "$lib/engine/types";
+	import type { ColorKey, COLORS } from "$lib/engine/types";
 
   interface Props {
-    baseColor: Color;
+    baseColor: (typeof COLORS)[ColorKey];
     shadingColor: string;
   }
   const { shadingColor, baseColor }: Props = $props()

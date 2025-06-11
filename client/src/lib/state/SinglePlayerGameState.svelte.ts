@@ -1,4 +1,4 @@
-import type { Card, Feature, VariationsNumber } from "$lib/engine/types";
+import type { Card, Feature, GameVersion, VariationsNumber } from "$lib/engine/types";
 import Game, { type GameOptions } from "$lib/engine/Game";
 
 export class SinglePlayerGameState {
@@ -12,10 +12,10 @@ export class SinglePlayerGameState {
   inPlayCards: Card[] = $derived(this.deck.filter(c => !c.isDiscarded && c.isVisible)) 
   isSetAvailable: boolean = $state(true);
 
-  constructor(features: Feature[], variationsNumber: VariationsNumber) {
-    this.features = features;
-    this.variationsNumber = variationsNumber;
-    this.game = new Game({ features, variationsNumber } as GameOptions);
+  constructor(gameVersion: GameVersion) {
+    this.features = gameVersion.features;
+    this.variationsNumber = gameVersion.variationsNumber;
+    this.game = new Game({ features: this.features, variationsNumber: this.variationsNumber } as GameOptions);
     this.deck = this.game.generateDeck();
     this.dealCards(this.variationsNumber * 4);
 
@@ -40,7 +40,7 @@ export class SinglePlayerGameState {
 
     $effect(() => {
       if (!this.isSetAvailable) {
-        this.dealCards(1)
+        this.dealCards(this.variationsNumber)
       }
     })
   }

@@ -9,11 +9,12 @@ export const FEATURES = {
 export type Feature = keyof typeof FEATURES;
 
 export const COLORS = {
-  red: '#FF0000',
-  green: 'green',
-  purple: '#800080',
-  blue: 'blue',
+  c1: '#FF0000',
+  c2: 'green',
+  c3: '#800080',
+  c4: 'blue',
 } as const;
+
 export const SHAPES = {
   diamond: 'diamond',
   squiggle: 'squiggle',
@@ -26,22 +27,26 @@ export const SHADINGS = {
   empty: 'empty',
   dotted: 'dotted',
 } as const;
-export const ROTATIONS = [0, 90, 180, 270] as const;
+export const ROTATIONS = {
+  vertical: 'vertical',
+  horizontal: 'horizontal',
+  diagonal: 'diagonal',
+} as const;
 export type VariationsNumber = 2 | 3 | 4;
 
 export const featureValues = {
-  color: Object.keys(COLORS) as Color[],
+  color: Object.keys(COLORS) as ColorKey[],
   shape: Object.keys(SHAPES) as Shape[],
   number: [1, 2, 3, 4],
   shading: Object.values(SHADINGS) as Shading[],
-  rotation: ROTATIONS,
+  rotation: Object.keys(ROTATIONS) as Rotation[],
 } as const;
 
 export type FeatureValue = 
   | (keyof typeof COLORS)
   | (keyof typeof SHAPES)
   | (keyof typeof SHADINGS)
-  | (typeof ROTATIONS[number])
+  | (keyof typeof ROTATIONS)
   | VariationsNumber;
 
 export type CardID = `${string}-${string}-${string}-${string}-${string}`;
@@ -52,13 +57,43 @@ export type Card = {
   isDiscarded: boolean;
 } & {
   // [key in Feature]?: keyof typeof featureValues[key];
-  color: Color;
+  color: ColorKey;
   shape: Shape;
   number: number;
   shading: Shading;
-  rotation?: typeof ROTATIONS[number];
+  rotation?: Rotation;
 };
 
-export type Color = keyof typeof COLORS;
+export type ColorKey = keyof typeof COLORS;
+export type Color = (typeof COLORS)[ColorKey];
 export type Shape = keyof typeof SHAPES;
 export type Shading = keyof typeof SHADINGS;
+export type Rotation = keyof typeof ROTATIONS;
+
+export interface GameVersion {
+  title: string;
+  description: string;
+  features: Feature[];
+  variationsNumber: VariationsNumber;
+}
+
+export const GameVersions = {
+  classic: {
+    title: 'Classic',
+    description: 'The original game with 4 features and 3 variations.',
+    features: ['color', 'shape', 'number', 'shading'] as Feature[],
+    variationsNumber: 3,
+  } as GameVersion,
+  v5x3: {
+    title: '5x3',
+    description: 'A variant with 5 features and 3 variations.',
+    features: ['color', 'shape', 'number', 'shading', 'rotation'] as Feature[],
+    variationsNumber: 3,
+  } as GameVersion,
+  v4x4: {
+    title: '4x4',
+    description: 'A variant with 4 features and 4 variations.',
+    features: ['color', 'shape', 'number', 'shading'] as Feature[],
+    variationsNumber: 4,
+  } as GameVersion,
+} as const;

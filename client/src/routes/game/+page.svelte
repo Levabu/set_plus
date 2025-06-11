@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Card from "$lib/components/Card.svelte";
 	import type { Feature } from "$lib/engine/types";
-	import { FEATURES } from "$lib/engine/types";
+	import { FEATURES, GameVersions } from "$lib/engine/types";
 
 	import { SinglePlayerGameState } from "$lib/state/SinglePlayerGameState.svelte";
 	import { onDestroy, onMount } from "svelte";
@@ -13,7 +13,12 @@
     FEATURES.number,
   ];
 
-  const gameState = new SinglePlayerGameState(features, 3);
+  const gameVersion = GameVersions.v4x4;
+  // const gameVersion = GameVersions.v5x3;
+  // const gameVersion = GameVersions.classic;
+
+  // const gameState = new SinglePlayerGameState(features, 3);
+  const gameState = new SinglePlayerGameState(gameVersion);
   
   $effect(() => {
     if (gameState.drawPile.length !== 0 || gameState.isSetAvailable) return;
@@ -43,7 +48,6 @@
     {#each gameState.inPlayCards as card (card.id)}
       <Card
         card={card}
-        variationsNumber={gameState.game.variationsNumber}
         onclick={() => {
           gameState.toggleSelectCard(card.id);
         }}
@@ -59,12 +63,16 @@
     min-height: 100vh;
   }
   .board {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    display: grid;
+    grid-template-columns: repeat(4, minmax(10rem, 1fr));
+    grid-gap: 1rem;
     padding: 1rem;
+    box-sizing: border-box;
   }
 
   @media (max-width: 600px) {
