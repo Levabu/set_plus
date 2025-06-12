@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { COLORS, SHAPES, type ColorKey, type Rotation, type Shading, type Shape as ShapeType, type Color } from "$lib/engine/types";
+  import { COLORS, SHAPES, type ColorKey, type Rotation, type Shading, type Shape as ShapeType } from "$lib/engine/types";
 	import Arrow from "./Arrow.svelte";
 	import Diamond from "./Diamond.svelte";
 	import Oval from "./Oval.svelte";
@@ -13,28 +13,15 @@
     rotation?: Rotation
   }
   let { shape, color, shading, rotation = "horizontal" }: Props = $props();
-  
-  // type Pattern = `${Color}_${Shading}`;
-  // const PATTERN_IDS: Partial<Record<Pattern, string>> = {
-  //   red_striped: 'redHorizontalStripes',
-  //   green_striped: 'greenHorizontalStripes',
-  //   blue_striped: 'blueHorizontalStripes',
-  //   purple_striped: 'purpleHorizontalStripes',
-  //   red_dotted: 'redCircles',
-  //   green_dotted: 'greenCircles',
-  //   blue_dotted: 'blueCircles',
-  //   purple_dotted: 'purpleCircles',
-  // };
 
   function getShadingColor(shading: Shading, color: ColorKey): string {
     switch (shading) {
       case 'solid':
-        return color;
+        return COLORS[color as ColorKey];
       case 'striped':
         return `url(#${color}_striped)`;
       case 'dotted':
         return `url(#${color}_dotted)`;
-        // return `url(#${PATTERN_IDS[`${color}_${shading}`]})`;
       case 'empty':
       default:
         return 'transparent';

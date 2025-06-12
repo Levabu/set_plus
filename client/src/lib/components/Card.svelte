@@ -22,9 +22,6 @@
         rotation={card.rotation || "horizontal"}
       />
   {/each}
-  <!-- <div class="mt-2 text-sm text-gray-600">
-    {card.shape} - {card.color} - {card.shading} - {card.number}
-  </div> -->
 </button>
 
 <style>
@@ -32,7 +29,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 1.5rem;
+    gap: 10%;
     overflow: hidden;
     flex-wrap: wrap;
     box-sizing: border-box;
@@ -43,9 +40,6 @@
     border-radius: 0.5rem;
     background-color: #f9f9f9;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-    /* aspect-ratio: 3 / 2;
-    max-height: 9rem; */
     
     min-height: 9rem;
 

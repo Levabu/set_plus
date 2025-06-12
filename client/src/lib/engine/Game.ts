@@ -50,7 +50,7 @@ export class Game {
   generateDeck(): Card[] {
     const deck: Card[] = [];
     this.generateCombinations(0, [], deck);
-    // Game.shuffleDeck(deck);
+    Game.shuffleDeck(deck);
     for (let i = 0; i < deck.length; i++) {
       deck[i].id = crypto.randomUUID();
     }

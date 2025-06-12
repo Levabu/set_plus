@@ -1,27 +1,20 @@
 <script lang="ts">
 	import Card from "$lib/components/Card.svelte";
-	import type { Feature } from "$lib/engine/types";
-	import { FEATURES, GameVersions } from "$lib/engine/types";
+	import SelectGame from "$lib/components/SelectGame.svelte";
+	import type { GameVersionKey } from "$lib/engine/types";
+	import { GameVersions } from "$lib/engine/types";
 
 	import { SinglePlayerGameState } from "$lib/state/SinglePlayerGameState.svelte";
-	import { onDestroy, onMount } from "svelte";
 
-  const features: Feature[] = [
-    FEATURES.shape,
-    FEATURES.color,
-    FEATURES.shading,
-    FEATURES.number,
-  ];
+  let gameVersion = $state(GameVersions.classic.key) as GameVersionKey | null;
+  let gameState = $state<SinglePlayerGameState | null>(null);
 
-  const gameVersion = GameVersions.v4x4;
-  // const gameVersion = GameVersions.v5x3;
-  // const gameVersion = GameVersions.classic;
-
-  // const gameState = new SinglePlayerGameState(features, 3);
-  const gameState = new SinglePlayerGameState(gameVersion);
-  
   $effect(() => {
-    if (gameState.drawPile.length !== 0 || gameState.isSetAvailable) return;
+    gameState = gameVersion !== null ? new SinglePlayerGameState(GameVersions[gameVersion as GameVersionKey]) : null;
+  });
+
+  $effect(() => {
+    if (gameState?.drawPile.length !== 0 || gameState.isSetAvailable) return;
     alert("You won!")
   })
 
@@ -29,10 +22,10 @@
   function onkeydown(event: KeyboardEvent) {
     if (event.code === "Space") {
       event.preventDefault();
-      const set = gameState.findSet();
+      const set = gameState?.findSet();
       if (set) {
         for (const card of set) {
-          gameState.toggleSelectCard(card.id);
+          gameState?.toggleSelectCard(card.id);
         }
       }
     }
@@ -43,21 +36,28 @@
 <svelte:window {onkeydown} />
 
 <div class="page">
-  <h1 class="text-xl font-semibold mb-4">Game Board</h1>
+  <SelectGame bind:gameVersion={gameVersion} />
+  <!-- <h1 class="text-xl font-semibold mb-4">Game Board</h1> -->
+  {#if gameState !== null}
   <div class="board">
     {#each gameState.inPlayCards as card (card.id)}
       <Card
         card={card}
         onclick={() => {
-          gameState.toggleSelectCard(card.id);
+          gameState?.toggleSelectCard(card.id);
         }}
       />
     {/each}
   </div>
+  {/if}
 </div>
 
 <style>
   .page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
     padding: 2rem;
     background-color: #f0f4f8;
     min-height: 100vh;

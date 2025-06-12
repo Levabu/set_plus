@@ -2,9 +2,10 @@ import type { Card, Feature, GameVersion, VariationsNumber } from "$lib/engine/t
 import Game, { type GameOptions } from "$lib/engine/Game";
 
 export class SinglePlayerGameState {
-  readonly features: Feature[];
-  readonly variationsNumber: VariationsNumber;
-  readonly game: Game;
+  features: Feature[];
+  variationsNumber: VariationsNumber;
+  game: Game;
+  id: string = crypto.randomUUID();
 
   deck: Card[] = $state<Card[]>([]);
   selectedIds: Card["id"][] = $derived(this.deck.filter(card => card.isSelected).map(card => card.id))
@@ -17,7 +18,7 @@ export class SinglePlayerGameState {
     this.variationsNumber = gameVersion.variationsNumber;
     this.game = new Game({ features: this.features, variationsNumber: this.variationsNumber } as GameOptions);
     this.deck = this.game.generateDeck();
-    this.dealCards(this.variationsNumber * 4);
+    this.dealCards(gameVersion.initialDeal);
 
     $effect(() => {
       if (this.selectedIds.length !== this.variationsNumber) return;
@@ -77,10 +78,12 @@ export class SinglePlayerGameState {
   }
   
   dealCards(cardsNumber: number): void {
+    const availableCards = this.deck.filter(c => !c.isDiscarded && !c.isVisible);
+    
     let dealt = 0;
-    while (dealt < cardsNumber && dealt < this.drawPile.length) {
-      this.drawPile[0].isVisible = true
-      dealt++
+    for (let i = 0; i < availableCards.length && dealt < cardsNumber; i++) {
+      availableCards[i].isVisible = true;
+      dealt++;
     }
   }
 
