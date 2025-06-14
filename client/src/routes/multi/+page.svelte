@@ -3,20 +3,29 @@
 	import SelectGame from "$lib/components/SelectGame.svelte";
 	import type { GameVersionKey } from "$lib/engine/types";
 	import { GameVersions } from "$lib/engine/types";
+	import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
 
 	import { SinglePlayerGameState } from "$lib/state/SinglePlayerGameState.svelte";
 	import type { WS } from "$lib/ws/ws.svelte";
+	import { onDestroy } from "svelte";
 
   let gameVersion = $state(null) as GameVersionKey | null;
-  let gameState = $state<SinglePlayerGameState | null>(null);
+  let gameState = $state<MultiPlayerGameState | null>(null);
 
   $effect(() => {
-    gameState = gameVersion !== null ? new SinglePlayerGameState(GameVersions[gameVersion as GameVersionKey]) : null;
+    gameState = gameVersion !== null ? new MultiPlayerGameState(GameVersions[gameVersion as GameVersionKey]) : null;
+
+    // if (gameState === null) return
+    // gameState.ws.socket.op
   });
 
-  $effect(() => {
-    if (gameState?.drawPile.length !== 0 || gameState.isSetAvailable) return;
-    alert("You won!")
+  // $effect(() => {
+
+  // })
+
+  onDestroy(() => {
+    if (gameState == null) return
+    gameState.ws.socket?.close()
   })
 
   // for quick testing

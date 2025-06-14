@@ -5,4 +5,5 @@
 <nav class="bg-gray-800 text-white p-4 flex gap-4">
   <a class="hover:underline" href="/">Home</a>
   <a class="hover:underline" href="/game">Game</a>
+  <a class="hover:underline" href="/multi">Mutli</a>
 </nav>
