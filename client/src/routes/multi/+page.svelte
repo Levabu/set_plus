@@ -9,7 +9,7 @@
 	import type { WS } from "$lib/ws/ws.svelte";
 	import { onDestroy } from "svelte";
 
-  let gameVersion = $state(null) as GameVersionKey | null;
+  let gameVersion = $state(GameVersions.classic.key) as GameVersionKey | null;
   let gameState = $state<MultiPlayerGameState | null>(null);
 
   $effect(() => {
