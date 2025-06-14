@@ -1,4 +1,4 @@
-import type { ClientToServerMessage } from "./messages";
+import type { ClientToServerMessage, ServerToClientMessage } from "./messages";
 
 export const CONNECTION_STATUS = {
   CONNECTED: 'connected',
@@ -8,7 +8,7 @@ export const CONNECTION_STATUS = {
 
 export class WS {
   socket: WebSocket | null = null;
-  messages: string[] = $state([]);
+  messages: ServerToClientMessage[] = $state([]);
   connectionStatus: string = $state(CONNECTION_STATUS.DISCONNECTED);
 
   constructor(url: string = "ws://localhost:8080") {

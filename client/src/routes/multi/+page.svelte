@@ -19,9 +19,13 @@
     // gameState.ws.socket.op
   });
 
-  // $effect(() => {
+  $effect(() => {
+    if (gameState === null) return
+    if (gameState.deck.length === 0) return
+    console.log("Deck initialized:", gameState.deck);
+  })
 
-  // })
+  // $inspect(gameState?.deck)
 
   onDestroy(() => {
     if (gameState == null) return

@@ -29,9 +29,9 @@
   }
   function getRotationAngle(rotation: Rotation): string {
     switch (rotation) {
-      case 'horizontal':
-        return '0';
       case 'vertical':
+        return '0';
+      case 'horizontal':
         return '90';
       case 'diagonal':
         return '45';
