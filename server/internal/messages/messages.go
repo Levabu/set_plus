@@ -18,12 +18,13 @@ const (
 	CreateRoom InMessageType = "CREATE_ROOM"
 	JoinRoom   InMessageType = "JOIN_ROOM"
 	StartGame  InMessageType = "START_GAME"
+	CheckSet   InMessageType = "CHECK_SET"
 )
 
 type StartGameMessage struct {
 	InMessage
 	GameVersion game.GameVersion `json:"gameVersion"`
-	RoomID uuid.UUID
+	RoomID      uuid.UUID
 }
 
 type JoinRoomMessage struct {
@@ -31,9 +32,17 @@ type JoinRoomMessage struct {
 	RoomID uuid.UUID
 }
 
+type CheckSetMessage struct {
+	InMessage
+	CardIDs  []uuid.UUID `json:"cardIDs"`
+	PlayerID uuid.UUID   `json:"playerID"`
+	RoomID   uuid.UUID   `json:"roomID"`
+	GameID   uuid.UUID   `json:"gameID"`
+}
+
 type Handler struct {
-	ID uuid.UUID
-	Cfg *config.Config
+	ID       uuid.UUID
+	Cfg      *config.Config
 	Handlers map[InMessageType]InMessageHandler
 }
 
@@ -52,6 +61,7 @@ func (h *Handler) RegisterHandlers() {
 		CreateRoom: h.handleCreateRoom,
 		JoinRoom:   h.handleJoinRoom,
 		StartGame:  h.handleStartGame,
+		CheckSet:   h.handleCheckSet,
 	}
 }
 
@@ -63,26 +73,44 @@ type BaseOutMessage struct {
 }
 
 const (
-	CreatedRoom OutMessageType = "CREATED_ROOM"
-	JoinedRoom  OutMessageType = "JOINED_ROOM"
-	StartedGame OutMessageType = "STARTED_GAME"
+	CreatedRoom    OutMessageType = "CREATED_ROOM"
+	JoinedRoom     OutMessageType = "JOINED_ROOM"
+	StartedGame    OutMessageType = "STARTED_GAME"
+	CheckSetResult OutMessageType = "CHECK_SET_RESULT"
+	ChangedGameState OutMessageType = "CHANGED_GAME_STATE"
 )
 
 type CreatedRoomMessage struct {
 	BaseOutMessage
-	RoomID uuid.UUID `json:"roomID"`
+	RoomID   uuid.UUID `json:"roomID"`
 	PlayerID uuid.UUID `json:"playerID"`
 }
 
 type JoinedRoomMessage struct {
 	BaseOutMessage
-	RoomID uuid.UUID `json:"roomID"`
+	RoomID   uuid.UUID `json:"roomID"`
 	PlayerID uuid.UUID `json:"playerID"`
-	Error  string `json:"error,omitempty"`
 }
 
 type StartedGameMessage struct {
 	BaseOutMessage
 	GameID uuid.UUID   `json:"gameID"`
 	Deck   []game.Card `json:"deck"`
+}
+
+type CheckSetResultMessage struct {
+	BaseOutMessage
+	IsSet bool `json:"isSet"`
+}
+
+type ChangedGameStateMessage struct {
+	BaseOutMessage
+	GameID uuid.UUID   `json:"gameID"`
+	Deck   []game.Card `json:"deck"`
+}
+
+// Error
+type ErrorMessage struct {
+	RefType InMessageType `json:"refType"`
+	Reason  string        `json:"reason"`
 }

@@ -42,6 +42,10 @@
 <svelte:window {onkeydown} />
 
 {#if gameState !== null}
+<div class="game-info">
+  <span>In Play Cards: {gameState.inPlayCards.length}</span>
+  <span>Sets found: {gameState.score}</span>
+</div>
 <div class="board">
   {#each gameState.inPlayCards as card (card.id)}
     <Card
@@ -66,6 +70,14 @@
     grid-gap: 1rem;
     padding: 1rem;
     box-sizing: border-box;
+  }
+
+  .game-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: #333;
   }
 
   @media (max-width: 600px) {

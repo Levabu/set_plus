@@ -5,6 +5,7 @@ export const OUT_MESSAGES = {
   START_GAME: 'START_GAME',
   CREATE_ROOM: 'CREATE_ROOM',
   JOIN_ROOM: 'JOIN_ROOM',
+  CHECK_SET: 'CHECK_SET',
 } as const;
 
 export interface StartGameMessage {
@@ -22,10 +23,19 @@ export interface JoinRoomMessage {
   roomID: string;
 }
 
+export interface CheckSetMessage {
+  readonly type: 'CHECK_SET';
+  cardIDs: string[];
+  playerID: string;
+  roomID: string;
+  gameID: string;
+}
+
 export type OutMessage = 
   | StartGameMessage
   | CreateRoomMessage
-  | JoinRoomMessage;
+  | JoinRoomMessage
+  | CheckSetMessage;
 
 
 
@@ -35,6 +45,8 @@ export const IN_MESSAGES = {
   CREATED_ROOM: 'CREATED_ROOM',
   JOINED_ROOM: 'JOINED_ROOM',
   STARTED_GAME: 'STARTED_GAME',
+  CHECK_SET_RESULT: 'CHECK_SET_RESULT',
+  CHANGED_GAME_STATE: 'CHANGED_GAME_STATE',
 } as const;
 
 export interface StartedGameMessage {
@@ -56,11 +68,26 @@ export interface JoinedRoomMessage {
   error: string | null;
 }
 
+export interface CheckSetResultMessage {
+  readonly type: typeof IN_MESSAGES.CHECK_SET_RESULT;
+  isSet: boolean;
+}
+
+export interface ChangedGameStateMessage {
+  readonly type: typeof IN_MESSAGES.CHANGED_GAME_STATE;
+  gameID: string;
+  deck: Card[];
+  playerID: string;
+}
+
 export type InMessage =
   (
     | StartedGameMessage  
     | CreatedRoomMessage
     | JoinedRoomMessage
+    | CheckSetResultMessage
+    | ChangedGameStateMessage
   ) & {
-    isProcessed?: boolean; // Optional property to track if the message has been processed
+    isProcessed?: boolean;
+    error?: string | null;
   };

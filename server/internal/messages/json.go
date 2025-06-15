@@ -12,3 +12,13 @@ func SendJSON(client *server.Client, payload interface{}) error {
 	}
 	return nil
 }
+
+func SendError(client *server.Client, msg ErrorMessage) error {
+	return SendJSON(client, struct{ 
+		Type string `json:"error"`
+		ErrorMessage
+	}{
+		Type: "error",
+		ErrorMessage: msg,
+	})
+}

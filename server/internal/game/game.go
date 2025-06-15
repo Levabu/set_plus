@@ -208,3 +208,50 @@ func (g *Game) DealCards(n int) {
 		}
 	}
 }
+
+func (g *Game) DealCardsUntilSetAvailable(dealNumber int, maxAttempts int) {
+	attempts := 0
+	for {
+		if g.IsSetAvailable() {
+			break
+		}
+		g.DealCards(g.GameConfig.VariationsNumber)
+		attempts++
+		if attempts == maxAttempts {
+			break
+		}
+	}
+}
+
+func (g *Game) DiscardCards(cards []Card) {
+	// update cards map
+	for _, card := range cards {
+		card, ok := (*g.Cards)[card.CardID]
+		if !ok {
+			continue
+		}
+		card.IsDiscarded = true
+		card.IsVisible = true
+		(*g.Cards)[card.CardID] = card
+	}
+
+	// update deck
+	handled := 0
+	ids := make([]uuid.UUID, len(cards))
+	for i, card := range cards {
+		ids[i] = card.CardID
+	}
+	for i, card := range g.Deck {
+		if !slices.Contains(ids, card.CardID) {
+			continue
+		}
+		card.IsDiscarded = true
+		card.IsVisible = true
+		g.Deck[i] = card
+		handled++
+		
+		if handled == len(cards) {
+			break
+		}
+	}
+}

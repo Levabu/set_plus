@@ -1,5 +1,5 @@
 import { ROTATIONS, type GameVersion } from "$lib/engine/types";
-import { OUT_MESSAGES, IN_MESSAGES, type StartGameMessage, type StartedGameMessage, type CreateRoomMessage, type CreatedRoomMessage, type JoinedRoomMessage } from "$lib/ws/messages";
+import { OUT_MESSAGES, IN_MESSAGES, type StartGameMessage, type StartedGameMessage, type CreateRoomMessage, type CreatedRoomMessage, type JoinedRoomMessage, type CheckSetResultMessage, type CheckSetMessage, type ChangedGameStateMessage } from "$lib/ws/messages";
 import { CONNECTION_STATUS, WS } from "$lib/ws/ws.svelte";
 import { GameState } from "./GameState.svelte";
 
@@ -39,12 +39,28 @@ export class MultiPlayerGameState extends GameState {
         case IN_MESSAGES.STARTED_GAME:
           this.handleGameCreatedMessage(lastMessage as StartedGameMessage);
           break;
+        case IN_MESSAGES.CHECK_SET_RESULT:
+          this.handleCheckSetResultMessage(lastMessage as CheckSetResultMessage);
+          break;
+        case IN_MESSAGES.CHANGED_GAME_STATE:
+          this.handleGameStateUpdate(lastMessage as ChangedGameStateMessage);
         default:
           console.warn("Unhandled message type:");
           break;
       }
       lastMessage.isProcessed = true;
     })
+
+    $effect(() => {
+      if (this.selectedIds.length !== this.variationsNumber) return;
+      this.ws.send({
+        type: OUT_MESSAGES.CHECK_SET,
+        cardIDs: this.selectedIds,
+        playerID: this.playerID,
+        roomID: this.roomID,
+        gameID: this.id
+      } as CheckSetMessage);
+    });
   }
 
   handleCreatedRoomMessage(message: CreatedRoomMessage): void {
@@ -89,5 +105,31 @@ export class MultiPlayerGameState extends GameState {
     }));
   }
 
+  handleCheckSetResultMessage(message: CheckSetResultMessage): void {
+    const isSet = message.isSet;
+    if (!isSet) {
+      return
+    }
+    this.score += 1;
+    this.resetSelectedCards();
+  }
 
+  handleGameStateUpdate(message: ChangedGameStateMessage): void {
+    if (message.gameID !== this.id) {
+      console.warn("Received game state update for a different game ID:", message.gameID);
+      return;
+    }
+    // Update the game state based on the message
+    this.deck = message.deck.map((card: any) => ({
+      id: card.id,
+      isVisible: card.isVisible,
+      isSelected: card.isSelected,
+      isDiscarded: card.isDiscarded,
+      color: card.color,
+      shape: card.shape,
+      number: Number(card.number),
+      shading: card.shading,
+      rotation: card.rotation || ROTATIONS.vertical,
+    }));
+  }
 }
