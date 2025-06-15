@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"server/internal/room"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -19,7 +20,7 @@ func NewRedisPresence(client *redis.Client) *RedisPresence {
 }
 
 func roomClientsKey(roomID uuid.UUID) string {
-	return fmt.Sprintf("room:%s:events", roomID.String())
+	return fmt.Sprintf("room:%s:client", roomID.String())
 }
 
 func roomChannel(roomID uuid.UUID) string {
@@ -49,29 +50,29 @@ func (p *RedisPresence) GetRoomMembers(ctx context.Context, roomID uuid.UUID) ([
 	return ids, nil
 }
 
-// func (p *RedisPresence) BroadcastToRoom(ctx context.Context, roomID uuid.UUID, message []byte) error {
-// 	return p.client.Publish(ctx, roomChannel(roomID), message).Err()
-// }
-
-func (p *RedisPresence) SubscribeToRoom(ctx context.Context, roomID uuid.UUID, handler func(clientID uuid.UUID, msg []byte)) error {
+func (p *RedisPresence) SubscribeToRoom(ctx context.Context, roomID uuid.UUID, handler func(clientID uuid.UUID, event room.Event)) error {
 	sub := p.client.Subscribe(ctx, roomChannel(roomID))
 	ch := sub.Channel()
 
+	log.Println("subscribed to channel:", roomChannel(roomID))
 	go func() {
 		for msg := range ch {
 			var envelope struct {
 				ClientID string          `json:"clientID"`
-				Payload  json.RawMessage `json:"payload"`
+				Payload  room.Event `json:"payload"`
 			}
+			// log.Println("event received:", msg)
 			if err := json.Unmarshal([]byte(msg.Payload), &envelope); err != nil {
 				log.Println("invalid broadcast message:", err)
 				continue
 			}
+			// log.Println("event unmarshalled:", envelope)
 			clientID, err := uuid.Parse(envelope.ClientID)
 			if err != nil {
 				log.Println("invalid client ID in broadcast:", err)
 				continue
 			}
+			log.Println("received room event:", envelope.Payload.Type)
 			handler(clientID, envelope.Payload)
 		}
 	}()

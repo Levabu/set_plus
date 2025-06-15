@@ -21,7 +21,7 @@ func New(client *redis.Client) *Store {
 	}
 }
 
-func (s *Store) CreateRoom(ctx context.Context, room *room.Room) error {
+func (s *Store) SetRoom(ctx context.Context, room *room.Room) error {
 	key := fmt.Sprintf("room:%s", room.ID)
 	data, err := json.Marshal(room)
 	if err != nil {
@@ -43,7 +43,7 @@ func (s *Store) GetRoom(ctx context.Context, id uuid.UUID) (*room.Room, error) {
 	return &room, nil
 }
 
-func (s *Store) SaveGameState(ctx context.Context, game *game.Game) error {
+func (s *Store) SetGameState(ctx context.Context, game *game.Game) error {
 	key := fmt.Sprintf("game:%s", game.GameID)
 	data, err := json.Marshal(game)
 	if err != nil {
@@ -66,22 +66,18 @@ func (s *Store) GetGameState(ctx context.Context, id uuid.UUID) (*game.Game, err
 }
 
 func (s *Store) PublishRoomUpdate(ctx context.Context, id uuid.UUID, event room.Event) error {
-	data, err := json.Marshal(event)
+	envelope := struct {
+		ClientID string     `json:"clientID"`
+		Payload  room.Event `json:"payload"`
+	}{
+		ClientID: id.String(),
+		Payload:  event,
+	}
+	data, err := json.Marshal(envelope)
 	if err != nil {
 		return err
 	}
 
-	channel := fmt.Sprintf("room:%s:events", id)
+	channel := fmt.Sprintf("room:%s:channel", id)
 	return s.client.Publish(ctx, channel, data).Err()
 }
-
-// func (s *Store) SubscribeToRoomEvents(id uuid.UUID) {
-// 	channel := fmt.Sprintf("room:%s:events", id)
-// 	pubsub := s.client.Subscribe(context.Background(), channel)
-// 	ch := pubsub.Channel()
-// 	for msg := range ch {
-// 		fmt.Sprintln(msg.String(), channel)
-// 		// This is triggered when PublishRoomUpdate is called
-// 		// handler.OnRoomUpdate(roomID, msg.Payload)
-// 	}
-// }

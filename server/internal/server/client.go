@@ -19,7 +19,7 @@ type LocalClients struct {
 	Mu      sync.RWMutex
 }
 
-func (c LocalClients) New() *LocalClients {
+func NewLocalClients() *LocalClients {
 	return &LocalClients{
 		Clients: make(map[uuid.UUID]*Client),
 	}
@@ -33,7 +33,7 @@ func (c *LocalClients) Add(client *Client) {
 
 func (c *LocalClients) Get(id uuid.UUID) *Client {
 	c.Mu.RLock()
-	defer c.Mu.Unlock()
+	defer c.Mu.RUnlock()
 	client, ok := c.Clients[id]
 	if !ok {
 		return nil

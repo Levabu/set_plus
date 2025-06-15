@@ -32,13 +32,23 @@ type JoinRoomMessage struct {
 }
 
 type Handler struct {
+	ID uuid.UUID
 	Cfg *config.Config
+	Handlers map[InMessageType]InMessageHandler
+}
+
+func NewHandler(cfg *config.Config) *Handler {
+	return &Handler{
+		ID:       uuid.New(),
+		Cfg:      cfg,
+		Handlers: make(map[InMessageType]InMessageHandler),
+	}
 }
 
 type InMessageHandler func(client *server.Client, rawMsg json.RawMessage) error
 
-func (h *Handler) RegisterHandlers() map[InMessageType]InMessageHandler {
-	return map[InMessageType]InMessageHandler{
+func (h *Handler) RegisterHandlers() {
+	h.Handlers = map[InMessageType]InMessageHandler{
 		CreateRoom: h.handleCreateRoom,
 		JoinRoom:   h.handleJoinRoom,
 		StartGame:  h.handleStartGame,

@@ -12,5 +12,5 @@ const (
 
 type Event struct {
 	Type     EventType `json:"type"`
-	PlayerID uuid.UUID `json:"playerID"`
+	CliendID uuid.UUID `json:"clientID"`
 }

@@ -9,9 +9,7 @@ import (
 	"server/internal/presence"
 	"server/internal/server"
 	"server/internal/store"
-	"sync"
 
-	// "github.com/google/uuid"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/redis/go-redis/v9"
@@ -23,7 +21,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true }, // allow all origins (dev only)
 }
 
-func handleWebSocket(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
+func handleWebSocket(w http.ResponseWriter, r *http.Request, handler *messages.Handler) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("WebSocket upgrade error:", err)
@@ -35,10 +33,10 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request, cfg *config.Config)
 		Conn: conn,
 	}
 
-	go handleConnetion(cfg, client)
+	go handleConnetion(handler, client)
 }
 
-func handleConnetion(cfg *config.Config, client *server.Client) {
+func handleConnetion(handler *messages.Handler, client *server.Client) {
 	defer client.Conn.Close()
 
 	for {
@@ -47,7 +45,7 @@ func handleConnetion(cfg *config.Config, client *server.Client) {
 			log.Println("Read error:", err)
 			break
 		}
-		log.Printf("Received: %s", msg)
+		// log.Printf("Received: %s", msg)
 
 		var baseMessage messages.InMessage
 		if err := json.Unmarshal(msg, &baseMessage); err != nil {
@@ -56,9 +54,8 @@ func handleConnetion(cfg *config.Config, client *server.Client) {
 		}
 
 		log.Println("message type:", baseMessage.Type)
-		handler := &messages.Handler{Cfg: cfg}
-		messageHandlers := handler.RegisterHandlers()
-		handle, ok := messageHandlers[baseMessage.Type]
+		
+		handle, ok := handler.Handlers[baseMessage.Type]
 		if !ok {
 			log.Println("unknown message type:", baseMessage.Type)
 			continue
@@ -79,19 +76,19 @@ func main() {
 	})
 	redisStore := store.New(redisClient)
 	presence := presence.NewRedisPresence(redisClient)
-	localClients := server.LocalClients{
-		Clients: make(map[uuid.UUID]*server.Client),
-		Mu: sync.RWMutex{},
-	}
+
 	cfg := &config.Config{
 		Environment:  config.Dev,
 		Store:        redisStore,
 		Presence:     presence,
-		LocalClients: &localClients,
+		LocalClients: server.NewLocalClients(),
 	}
 
+	handler := messages.NewHandler(cfg)
+	handler.RegisterHandlers()
+
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		handleWebSocket(w, r, cfg)
+		handleWebSocket(w, r, handler)
 	})
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

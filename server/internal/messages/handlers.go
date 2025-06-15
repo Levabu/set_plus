@@ -21,7 +21,7 @@ func (h *Handler) handleCreateRoom(client *server.Client, rawMsg json.RawMessage
 	}
 	client.RoomID = newRoom.ID
 
-	if err := h.Cfg.Store.CreateRoom(context.Background(), &newRoom); err != nil {
+	if err := h.Cfg.Store.SetRoom(context.Background(), &newRoom); err != nil {
 		return err
 	}
 
@@ -30,8 +30,8 @@ func (h *Handler) handleCreateRoom(client *server.Client, rawMsg json.RawMessage
 	}
 	h.Cfg.LocalClients.Add(client)
 
-	go h.Cfg.Presence.SubscribeToRoom(context.Background(), newRoom.ID, func(clientID uuid.UUID, msg []byte) {
-		h.HandleRoomEvent(clientID, msg)
+	go h.Cfg.Presence.SubscribeToRoom(context.Background(), newRoom.ID, func(clientID uuid.UUID, event room.Event) {
+		h.HandleRoomEvent(clientID, event)
 	})
 
 	SendJSON(client, CreatedRoomMessage{
@@ -71,7 +71,7 @@ func (h *Handler) handleJoinRoom(client *server.Client, rawMsg json.RawMessage) 
 
 	err = h.Cfg.Store.PublishRoomUpdate(context.Background(), joinedRoom.ID, room.Event{
 		Type:     room.JoinedPlayer,
-		PlayerID: client.ID,
+		CliendID: client.ID,
 	})
 	if err != nil {
 		return err
@@ -92,34 +92,30 @@ func (h *Handler) handleStartGame(client *server.Client, rawMsg json.RawMessage)
 		return err
 	}
 
-	// r, err := h.Cfg.Store.GetRoom(context.Background(), msg.RoomID)
-	// if err != nil {
-	// 	return err
-	// }
+	r, err := h.Cfg.Store.GetRoom(context.Background(), msg.RoomID)
+	if err != nil {
+		return err
+	}
+	r.GameID = game.GameID
 
 	// todo: only allow owner to start
 	// if r.OwnerID != client.ID
 
-	if err = h.Cfg.Store.SaveGameState(context.Background(), game); err != nil {
+	if err = h.Cfg.Store.SetRoom(context.Background(), r); err != nil {
 		return err
 	}
-	// log.Println(msg)
+
+	if err = h.Cfg.Store.SetGameState(context.Background(), game); err != nil {
+		return err
+	}
+
 	err = h.Cfg.Store.PublishRoomUpdate(context.Background(), client.RoomID, room.Event{
 		Type:     room.StartedGame,
-		PlayerID: client.ID,
+		CliendID: client.ID,
 	})
 	if err != nil {
 		return err
 	}
-
-	// SendJSON(client, StartedGameMessage{
-	// 	BaseOutMessage: BaseOutMessage{Type: StartedGame},
-	// 	GameID:         game.GameID,
-	// 	Deck:           game.Deck,
-	// })
-
-	log.Println("send create game message")
-
 	return nil
 }
 
@@ -151,48 +147,45 @@ func _createNewGame(msg StartGameMessage) (*game.Game, error) {
 }
 
 func (h *Handler) BroadcastToRoom(ctx context.Context, roomID uuid.UUID, payload interface{}) error {
+	// log.Println("getting room members")
 	cliendsIDs, err := h.Cfg.Presence.GetRoomMembers(ctx, roomID)
 	if err != nil {
 		return err
 	}
-
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return err
-	}
+	log.Println("room members:", cliendsIDs)
 
 	for _, clientID := range cliendsIDs {
+		// log.Println(h.Cfg.LocalClients)
+		if h.Cfg.LocalClients == nil {
+			continue
+		}
 		client := h.Cfg.LocalClients.Get(clientID)
 		if client == nil {
 			continue
 		}
-		SendJSON(client, data)
+		SendJSON(client, payload)
 	}
 
 	return nil
 }
 
-func (h *Handler) HandleRoomEvent(id uuid.UUID, rawMsg []byte) {
-	var event room.Event
-	if err := json.Unmarshal(rawMsg, &event); err != nil {
-		log.Println("invalid event payload:", err)
-		return
-	}
-	log.Println("room event:", event.Type)
-
+func (h *Handler) HandleRoomEvent(id uuid.UUID, event room.Event) {
 	switch event.Type {
 	case room.JoinedPlayer:
 		h.BroadcastToRoom(context.Background(), id, JoinedRoomMessage{
 			BaseOutMessage: BaseOutMessage{Type: JoinedRoom},
 			RoomID:         id,
-			PlayerID:       event.PlayerID,
+			PlayerID:       event.CliendID,
 		})
 	case room.StartedGame:
+		log.Println("handling event: started game")
 		room, err := h.Cfg.Store.GetRoom(context.Background(), id)
 		if err != nil {
 			return
 		}
+		log.Println("starteg game in room:", room.ID)
 		game, err := h.Cfg.Store.GetGameState(context.Background(), room.GameID)
+		// log.Println("game state on start:", game)
 		if err != nil {
 			return
 		}
