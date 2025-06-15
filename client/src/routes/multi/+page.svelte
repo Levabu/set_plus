@@ -1,68 +1,16 @@
 <script lang="ts">
-	import Card from "$lib/components/Card.svelte";
+	import Board from "$lib/components/Board.svelte";
 	import SelectGame from "$lib/components/SelectGame.svelte";
 	import type { GameVersionKey } from "$lib/engine/types";
 	import { GameVersions } from "$lib/engine/types";
-	import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
-
-	import { SinglePlayerGameState } from "$lib/state/SinglePlayerGameState.svelte";
-	import type { WS } from "$lib/ws/ws.svelte";
-	import { onDestroy } from "svelte";
 
   let gameVersion = $state(GameVersions.classic.key) as GameVersionKey | null;
-  let gameState = $state<MultiPlayerGameState | null>(null);
-
-  $effect(() => {
-    gameState = gameVersion !== null ? new MultiPlayerGameState(GameVersions[gameVersion as GameVersionKey]) : null;
-
-    // if (gameState === null) return
-    // gameState.ws.socket.op
-  });
-
-  $effect(() => {
-    if (gameState === null) return
-    if (gameState.deck.length === 0) return
-    console.log("Deck initialized:", gameState.deck);
-  })
-
-  // $inspect(gameState?.deck)
-
-  onDestroy(() => {
-    if (gameState == null) return
-    gameState.ws.socket?.close()
-  })
-
-  // for quick testing
-  function onkeydown(event: KeyboardEvent) {
-    if (event.code === "Space") {
-      event.preventDefault();
-      const set = gameState?.findSet();
-      if (set) {
-        for (const card of set) {
-          gameState?.toggleSelectCard(card.id);
-        }
-      }
-    }
-  }
-
 </script>
-
-<svelte:window {onkeydown} />
 
 <div class="page">
   <SelectGame bind:gameVersion={gameVersion} />
-  <!-- <h1 class="text-xl font-semibold mb-4">Game Board</h1> -->
-  {#if gameState !== null}
-  <div class="board">
-    {#each gameState.inPlayCards as card (card.id)}
-      <Card
-        card={card}
-        onclick={() => {
-          gameState?.toggleSelectCard(card.id);
-        }}
-      />
-    {/each}
-  </div>
+  {#if gameVersion !== null}
+    <Board gameVersion={gameVersion}/>
   {/if}
 </div>
 

@@ -54,7 +54,7 @@ func (p *RedisPresence) SubscribeToRoom(ctx context.Context, roomID uuid.UUID, h
 	sub := p.client.Subscribe(ctx, roomChannel(roomID))
 	ch := sub.Channel()
 
-	log.Println("subscribed to channel:", roomChannel(roomID))
+	// log.Println("subscribed to channel:", roomChannel(roomID))
 	go func() {
 		for msg := range ch {
 			var envelope struct {

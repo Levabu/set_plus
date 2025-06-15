@@ -57,6 +57,10 @@ export interface JoinedRoomMessage {
 }
 
 export type InMessage =
-  | StartedGameMessage
-  | CreatedRoomMessage
-  | JoinedRoomMessage;
+  (
+    | StartedGameMessage  
+    | CreatedRoomMessage
+    | JoinedRoomMessage
+  ) & {
+    isProcessed?: boolean; // Optional property to track if the message has been processed
+  };

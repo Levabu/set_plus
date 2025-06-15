@@ -23,6 +23,7 @@ export class WS {
     
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        data.isProcessed = false
         console.log('WebSocket message received:', data);
         this.messages.push(data);
     };
@@ -40,6 +41,7 @@ export class WS {
   }
 
   send(message: OutMessage) {
+    console.log("Sending message:", message);
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(message));
     } else {

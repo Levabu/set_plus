@@ -38,7 +38,6 @@ func (h *Handler) handleCreateRoom(client *server.Client, rawMsg json.RawMessage
 		RoomID:         newRoom.ID,
 		PlayerID:       newRoom.OwnerID,
 	})
-
 	return nil
 }
 
@@ -150,7 +149,7 @@ func (h *Handler) BroadcastToRoom(ctx context.Context, roomID uuid.UUID, payload
 	if err != nil {
 		return err
 	}
-	log.Println("room members:", cliendsIDs)
+	// log.Println("room members:", cliendsIDs)
 
 	for _, clientID := range cliendsIDs {
 		// log.Println(h.Cfg.LocalClients)
