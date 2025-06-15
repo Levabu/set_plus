@@ -4,12 +4,17 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"server/internal/config"
 	"server/internal/messages"
+	"server/internal/presence"
 	"server/internal/server"
+	"server/internal/store"
+	"sync"
 
 	// "github.com/google/uuid"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/redis/go-redis/v9"
 )
 
 var upgrader = websocket.Upgrader{
@@ -18,7 +23,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true }, // allow all origins (dev only)
 }
 
-func handleWebSocket(w http.ResponseWriter, r *http.Request) {
+func handleWebSocket(w http.ResponseWriter, r *http.Request, cfg *config.Config) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("WebSocket upgrade error:", err)
@@ -26,16 +31,15 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := &server.Client{
-		ID: uuid.New(),
+		ID:   uuid.New(),
 		Conn: conn,
 	}
 
-	go handleConnetion(client)
+	go handleConnetion(cfg, client)
 }
 
-func handleConnetion(client *server.Client) {
+func handleConnetion(cfg *config.Config, client *server.Client) {
 	defer client.Conn.Close()
-	// fmt.Println(conn)
 
 	for {
 		_, msg, err := client.Conn.ReadMessage()
@@ -45,68 +49,50 @@ func handleConnetion(client *server.Client) {
 		}
 		log.Printf("Received: %s", msg)
 
-		var baseMessage messages.BaseMessage
+		var baseMessage messages.InMessage
 		if err := json.Unmarshal(msg, &baseMessage); err != nil {
 			log.Println("invalid message:", err)
 			continue
 		}
 
 		log.Println("message type:", baseMessage.Type)
-		handler, ok := messages.MessageHandlers[baseMessage.Type]
+		handler := &messages.Handler{Cfg: cfg}
+		messageHandlers := handler.RegisterHandlers()
+		handle, ok := messageHandlers[baseMessage.Type]
 		if !ok {
 			log.Println("unknown message type:", baseMessage.Type)
 			continue
 		}
 
-		err = handler(client, msg)
+		err = handle(client, msg)
 		if err != nil {
 			log.Println("error handling message:", err.Error())
 		}
-
-		// err = client.Conn.WriteMessage(websocket.TextMessage, []byte("Echo: "+string(msg)))
-		// if err != nil {
-		// 	log.Println("Write error:", err)
-		// 	break
-		// }
 	}
 }
 
 func main() {
-	http.HandleFunc("/ws", handleWebSocket)
+	redisClient := store.Init(redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+	redisStore := store.New(redisClient)
+	presence := presence.NewRedisPresence(redisClient)
+	localClients := server.LocalClients{
+		Clients: make(map[uuid.UUID]*server.Client),
+		Mu: sync.RWMutex{},
+	}
+	cfg := &config.Config{
+		Environment:  config.Dev,
+		Store:        redisStore,
+		Presence:     presence,
+		LocalClients: &localClients,
+	}
+
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		handleWebSocket(w, r, cfg)
+	})
 	log.Println("Server running on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
-
-	// game, err := game.NewGame(game.Classic)
-	// if err != nil {
-	// 	log.Fatalf("Error creating game: %v", err)
-	// }
-	// game.GenerateCards()
-
-	// for range 10 {
-	// 	set := game.FindSet()
-	// 	fmt.Println(set)
-	// 	for _, card := range set {
-	// 		fmt.Printf("Features: %v\n", card)
-	// 	}
-	// 	ids := make([]uuid.UUID, 0)
-	// 	for _, card := range set {
-	// 		ids = append(ids, card.CardID)
-	// 	}
-	// 	game.HandleCheckSet(ids)
-	// }
-
-	// game.HandleCheckSet(ids)
-
-	// for _, card := range game.Deck {
-	// 	fmt.Printf("Features: %v\n", card.IsDiscarded)
-	// }
-
-	// fmt.Println()
-	// set = game.FindSet()
-	// for _, card := range set {
-	// 	fmt.Printf("Features: %v\n", card.Features)
-	// }
-
-	// log.Println("Game initialized with", len(game.Deck), "cards.")
-	// log.Println("Game version:", game.GameConfig.Features, "Variations:", game.GameConfig.VariationsNumber)
 }

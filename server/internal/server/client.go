@@ -1,11 +1,42 @@
 package server
 
 import (
+	"sync"
+
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type Client struct {
-	ID uuid.UUID
-	Conn *websocket.Conn
+	ID       uuid.UUID
+	Conn     *websocket.Conn
+	RoomID   uuid.UUID
+	Nickname string
+}
+
+type LocalClients struct {
+	Clients map[uuid.UUID]*Client
+	Mu      sync.RWMutex
+}
+
+func (c LocalClients) New() *LocalClients {
+	return &LocalClients{
+		Clients: make(map[uuid.UUID]*Client),
+	}
+}
+
+func (c *LocalClients) Add(client *Client) {
+	c.Mu.Lock()
+	defer c.Mu.Unlock()
+	c.Clients[client.ID] = client
+}
+
+func (c *LocalClients) Get(id uuid.UUID) *Client {
+	c.Mu.RLock()
+	defer c.Mu.Unlock()
+	client, ok := c.Clients[id]
+	if !ok {
+		return nil
+	}
+	return client
 }

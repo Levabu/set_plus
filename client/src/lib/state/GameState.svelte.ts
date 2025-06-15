@@ -6,6 +6,7 @@ export class GameState {
   variationsNumber: VariationsNumber;
   game: Game;
   id!: string;
+  gameVersion!: GameVersion;
 
   deck: Card[] = $state<Card[]>([]);
   selectedIds: Card["id"][] = $derived(this.deck.filter(card => card.isSelected).map(card => card.id))
@@ -15,6 +16,7 @@ export class GameState {
   constructor(gameVersion: GameVersion) {
     this.features = gameVersion.features;
     this.variationsNumber = gameVersion.variationsNumber;
+    this.gameVersion = gameVersion;
     this.game = new Game({ features: this.features, variationsNumber: this.variationsNumber } as GameOptions);
   }
 
