@@ -231,7 +231,7 @@ func (g *Game) DiscardCards(cards []Card) {
 			continue
 		}
 		card.IsDiscarded = true
-		card.IsVisible = true
+		card.IsVisible = false
 		(*g.Cards)[card.CardID] = card
 	}
 
@@ -246,7 +246,7 @@ func (g *Game) DiscardCards(cards []Card) {
 			continue
 		}
 		card.IsDiscarded = true
-		card.IsVisible = true
+		card.IsVisible = false
 		g.Deck[i] = card
 		handled++
 		
