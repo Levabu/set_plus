@@ -28,7 +28,6 @@ func (h *Handler) handleCreateRoom(client *server.Client, rawMsg json.RawMessage
 	if err := h.Cfg.Presence.JoinRoom(context.Background(), newRoom.ID, client.ID); err != nil {
 		return err
 	}
-	h.Cfg.LocalClients.Add(client)
 
 	go h.Cfg.Presence.SubscribeToRoom(context.Background(), newRoom.ID, func(clientID uuid.UUID, event room.Event) {
 		h.HandleRoomEvent(clientID, event)
@@ -67,7 +66,6 @@ func (h *Handler) handleJoinRoom(client *server.Client, rawMsg json.RawMessage) 
 	if err := h.Cfg.Presence.JoinRoom(context.Background(), joinedRoom.ID, client.ID); err != nil {
 		return err
 	}
-	h.Cfg.LocalClients.Add(client)
 
 	err = h.Cfg.Store.PublishRoomUpdate(context.Background(), joinedRoom.ID, room.Event{
 		Type:     room.JoinedPlayer,

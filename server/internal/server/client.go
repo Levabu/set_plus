@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"sync"
 
 	"github.com/google/uuid"
@@ -29,6 +30,8 @@ func (c *LocalClients) Add(client *Client) {
 	c.Mu.Lock()
 	defer c.Mu.Unlock()
 	c.Clients[client.ID] = client
+	log.Println("added local client:", client.ID)
+	log.Println("current clients:", c.Clients)
 }
 
 func (c *LocalClients) Get(id uuid.UUID) *Client {
@@ -39,4 +42,10 @@ func (c *LocalClients) Get(id uuid.UUID) *Client {
 		return nil
 	}
 	return client
+}
+
+func (c *LocalClients) Remove(id uuid.UUID) {
+	c.Mu.Lock()
+	defer c.Mu.Unlock()
+	delete(c.Clients, id)
 }

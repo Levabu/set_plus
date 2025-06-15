@@ -39,6 +39,9 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request, handler *messages.H
 func handleConnetion(handler *messages.Handler, client *server.Client) {
 	defer client.Conn.Close()
 
+	handler.Cfg.LocalClients.Add(client)
+	defer handler.Cfg.LocalClients.Remove(client.ID)
+
 	for {
 		_, msg, err := client.Conn.ReadMessage()
 		if err != nil {
