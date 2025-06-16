@@ -35,6 +35,13 @@ func (h *Handler) handleCheckSet(client *server.Client, rawMsg json.RawMessage) 
 		return err
 	}
 
+	if gameState.Finished {
+		return SendError(client, ErrorMessage{
+			RefType: CheckSet,
+			Reason:  "game already finished",
+		})
+	}
+
 	if err := validateSetInput(gameState, msg.CardIDs); err != nil {
 		return SendError(client, ErrorMessage{
 			RefType: CheckSet,
@@ -75,6 +82,7 @@ func (h *Handler) handleCheckSet(client *server.Client, rawMsg json.RawMessage) 
 	(*gameState.Players)[client.ID] = player
 
 	gameOver := gameState.IsGameOver()
+	gameState.Finished = gameOver
 
 	err = h.Cfg.Store.SetGameState(context.Background(), gameState)
 	if err != nil {

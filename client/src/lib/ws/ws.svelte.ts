@@ -22,27 +22,27 @@ export class WS {
     this.socket = ws
 
     ws.onopen = () => {
-        this.socket = ws;
-        this.connectionStatus = CONNECTION_STATUS.CONNECTED;
-        console.log('WebSocket connected');
+      this.socket = ws;
+      this.connectionStatus = CONNECTION_STATUS.CONNECTED;
+      console.log('WebSocket connected');
     };
-    
+
     ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        data.isProcessed = false
-        console.log('WebSocket message received:', data);
-        this.messages.push(data);
+      const data = JSON.parse(event.data);
+      data.isProcessed = false
+      console.log('WebSocket message received:', data);
+      this.messages.push(data);
     };
-    
+
     ws.onclose = () => {
-        this.socket = null;
-        this.connectionStatus = CONNECTION_STATUS.DISCONNECTED;
-        console.log('WebSocket disconnected');
+      this.socket = null;
+      this.connectionStatus = CONNECTION_STATUS.DISCONNECTED;
+      console.log('WebSocket disconnected');
     };
-    
+
     ws.onerror = (error) => {
-        this.connectionStatus = CONNECTION_STATUS.ERROR;
-        console.error('WebSocket error:', error);
+      this.connectionStatus = CONNECTION_STATUS.ERROR;
+      console.error('WebSocket error:', error);
     };
 
     $effect(() => {
@@ -52,30 +52,10 @@ export class WS {
         return;
       }
 
-      switch (lastMessage.type) {
-        case IN_MESSAGES.CREATED_ROOM:
-          this.handleCreatedRoomMessage(lastMessage as CreatedRoomMessage);
-          break;
-        case IN_MESSAGES.JOINED_ROOM:
-          this.handleJoinedRoomMessage(lastMessage as JoinedRoomMessage);
-          break;
-        case IN_MESSAGES.STARTED_GAME:
-          this.handleStartedGameMessage(lastMessage as StartedGameMessage);
-          break;
-        case IN_MESSAGES.CHECK_SET_RESULT:
-          this.game?.handleCheckSetResultMessage(lastMessage as CheckSetResultMessage);
-          break;
-        case IN_MESSAGES.CHANGED_GAME_STATE:
-          this.game?.handleGameStateUpdate(lastMessage as ChangedGameStateMessage);
-          break;
-        case IN_MESSAGES.GAME_OVER:
-          this.game?.handleGameOverMessage(lastMessage as GameOverMessage);
-          break;
-        default:
-          console.warn("Unhandled message type:");
-          break;
-      }
+      this.handleMessage(lastMessage)
+
       lastMessage.isProcessed = true;
+      console.log(this.messages.filter(m => !m.isProcessed).length)
     })
 
     $effect(() => {
@@ -89,6 +69,32 @@ export class WS {
         gameID: this.game.id
       } as CheckSetMessage);
     });
+  }
+
+  handleMessage(message: InMessage): void {
+    switch (message.type) {
+      case IN_MESSAGES.CREATED_ROOM:
+        this.handleCreatedRoomMessage(message as CreatedRoomMessage);
+        break;
+      case IN_MESSAGES.JOINED_ROOM:
+        this.handleJoinedRoomMessage(message as JoinedRoomMessage);
+        break;
+      case IN_MESSAGES.STARTED_GAME:
+        this.handleStartedGameMessage(message as StartedGameMessage);
+        break;
+      case IN_MESSAGES.CHECK_SET_RESULT:
+        this.game?.handleCheckSetResultMessage(message as CheckSetResultMessage);
+        break;
+      case IN_MESSAGES.CHANGED_GAME_STATE:
+        this.game?.handleGameStateUpdate(message as ChangedGameStateMessage);
+        break;
+      case IN_MESSAGES.GAME_OVER:
+        this.game?.handleGameOverMessage(message as GameOverMessage);
+        break;
+      default:
+        console.warn("Unhandled message type:");
+        break;
+    }
   }
 
   handleCreatedRoomMessage(message: CreatedRoomMessage): void {

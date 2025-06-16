@@ -116,6 +116,7 @@ type ChangedGameStateMessage struct {
 type GameOverMessage struct {
 	BaseOutMessage
 	GameID  uuid.UUID                 `json:"gameID"`
+	Deck    []game.Card               `json:"deck"`
 	Players map[uuid.UUID]game.Player `json:"players"`
 }
 

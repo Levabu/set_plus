@@ -47,6 +47,18 @@ export class MultiPlayerGameState extends GameState {
 
   handleGameOverMessage(message: GameOverMessage): void {
     this.isOver = true;
+    this.deck = message.deck.map((card: any) => ({
+      id: card.id,
+      isVisible: card.isVisible,
+      isSelected: card.isSelected,
+      isDiscarded: card.isDiscarded,
+      color: card.color,
+      shape: card.shape,
+      number: Number(card.number),
+      shading: card.shading,
+      rotation: card.rotation || ROTATIONS.vertical,
+    }));
+    this.players = message.players
     console.log("Game over! Final scores:", message.players);
   }
 }

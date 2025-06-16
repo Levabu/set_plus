@@ -89,7 +89,8 @@ export interface ChangedGameStateMessage {
 export interface GameOverMessage {
   readonly type: typeof IN_MESSAGES.GAME_OVER;
   gameID: string;
-  players: Record<string, Record<string, string | number>>;
+  deck: Card[];
+  players: Record<string, Player>;
 }
 
 export type InMessage =
