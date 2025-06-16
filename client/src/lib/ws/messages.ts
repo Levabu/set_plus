@@ -55,6 +55,7 @@ export type Player = { id: string; nickname: string; score: number }
 export interface StartedGameMessage {
   readonly type: typeof IN_MESSAGES.STARTED_GAME;
   gameID: string;
+  gameVersion: GameVersionKey;
   deck: Card[]
   players: Record<string, Player>;
 }

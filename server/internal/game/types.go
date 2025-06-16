@@ -86,10 +86,11 @@ type Player struct {
 }
 
 type Game struct {
-	GameID     uuid.UUID
-	GameConfig GameConfig
-	Cards      *map[uuid.UUID]Card
-	Deck       []Card
-	Players    *map[uuid.UUID]Player
-	Finished   bool
+	GameID      uuid.UUID
+	GameVersion GameVersion
+	GameConfig  GameConfig
+	Cards       *map[uuid.UUID]Card
+	Deck        []Card
+	Players     *map[uuid.UUID]Player
+	Finished    bool
 }

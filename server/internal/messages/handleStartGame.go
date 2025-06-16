@@ -29,7 +29,7 @@ func (h *Handler) handleStartGame(client *server.Client, rawMsg json.RawMessage)
 	if r.OwnerID != client.ID {
 		return SendError(client, ErrorMessage{
 			RefType: StartGame,
-			Reason: "only owner of the room can start the game",
+			Reason:  "only owner of the room can start the game",
 		})
 	}
 
@@ -65,18 +65,13 @@ func createNewGame(msg StartGameMessage) (*game.Game, error) {
 		return nil, fmt.Errorf("unsupported game version: %s", msg.GameVersion)
 	}
 
-	gameConfig, exists := game.GameVersions[msg.GameVersion]
-	if !exists {
-		return nil, fmt.Errorf("unsupported game version: %s", msg.GameVersion)
-	}
-
-	game, err := game.NewGame(gameConfig)
+	game, err := game.NewGame(msg.GameVersion)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create new game: %s", err.Error())
 	}
 	game.GenerateCards()
 	game.ShuffleDeck()
-	game.DealCards(gameConfig.InitialDeal)
+	game.DealCards(game.GameConfig.InitialDeal)
 	game.DealCardsUntilSetAvailable(game.GameConfig.VariationsNumber, 30)
 
 	return game, nil

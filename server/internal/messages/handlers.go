@@ -54,6 +54,7 @@ func (h *Handler) HandleRoomEvent(id uuid.UUID, event room.Event) {
 		h.BroadcastToRoom(context.Background(), id, StartedGameMessage{
 			BaseOutMessage: BaseOutMessage{Type: StartedGame},
 			GameID:         room.GameID,
+			GameVersion:    game.GameVersion,
 			Deck:           game.GetInPlayCards(),
 			Players:        *game.Players,
 		})
@@ -83,8 +84,8 @@ func (h *Handler) HandleRoomEvent(id uuid.UUID, event room.Event) {
 		}
 		h.BroadcastToRoom(context.Background(), id, GameOverMessage{
 			BaseOutMessage: BaseOutMessage{Type: GameOver},
-			GameID: game.GameID,
-			Players: *game.Players,
+			GameID:         game.GameID,
+			Players:        *game.Players,
 		})
 	}
 }

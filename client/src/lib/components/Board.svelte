@@ -1,85 +1,72 @@
 <script lang="ts">
 	import { GameVersions, type GameVersionKey } from "$lib/engine/types";
 	import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
-	import { onDestroy } from "svelte";
 	import Card from "./Card.svelte";
 	import Modal from "./Modal.svelte";
 	import SelectGame from "./SelectGame.svelte";
-	import { CONNECTION_STATUS } from "$lib/ws/ws.svelte";
+	import { CONNECTION_STATUS, WS } from "$lib/ws/ws.svelte";
 	import { OUT_MESSAGES, type CreateRoomMessage, type JoinRoomMessage } from "$lib/ws/messages";
-	import { Button } from "bits-ui";
 	import DisplayRoomLink from "./DisplayRoomLink.svelte";
 
-  // interface Props {
-  //   gameVersion: GameVersionKey;
-  // }
-
-  // let { gameVersion }: Props = $props();
-
-  let gameState = $state<MultiPlayerGameState | null>(null);
+  let ws = $state<WS | null>(new WS("ws://localhost:8080/ws"))
+  let gameState = $derived<MultiPlayerGameState | null>(ws?.game || null);
   let gameVersion = $state(GameVersions.classic.key) as GameVersionKey | null;
-  // let isModalOpen = $state<boolean>(true)
-  let isModalOpen = $derived<boolean>((() => {
-    if (!gameState?.hasGameStarted) return true
-    return false
-  })())
+  let isModalOpen = $derived<boolean>(!ws?.game?.hasGameStarted)
   let joinRoomID = $state("")
   let modalButtonText = $derived((() => {
-    if (joinRoomID && !gameState?.playerID) return "Join Room"
-    if (joinRoomID && gameState?.playerID) return "Waiting for the game to start..."
-    if (!gameState || !gameState.roomID) return "Create Room"
+    if (joinRoomID && !ws?.playerID) return "Join Room"
+    if (joinRoomID && ws?.playerID) return "Waiting for the game to start..."
+    if (!ws?.roomID) return "Create Room"
     return "Start Game"
   })())
-  let roomLink = $derived((() => {
-    const roomId = gameState?.roomID || joinRoomID
-    if (!roomId) return ""
-    return window.location.href + `/?roomID=${roomId}`
-  })())
+  let roomLink = $state("")
 
-  $inspect({
-    rommID: gameState?.roomID,
-    playerID: gameState?.playerID,
-    isRoomOwner: gameState?.isRoomOwner,
-    started: gameState?.hasGameStarted,
-    deck: gameState?.deck
-  })
+  // $inspect({
+  //   playerID: gameState?.playerID,
+  //   wsplayerID: ws?.playerID,
+  //   started: gameState?.hasGameStarted,
+  //   deck: gameState?.deck
+  // })
   $effect(() => {
-    // if (!isModalOpen) return
-    gameState = gameVersion !== null ? new MultiPlayerGameState(GameVersions[gameVersion as GameVersionKey]) : null;
-
     return () => {
-      console.log("rerender")
-      gameState?.ws.socket?.close()
+      ws?.socket?.close()
     }
-  });
+  })
 
   $effect(() => {
-    if (!window) return
+    if (!window || joinRoomID) return
     const params = new URLSearchParams(window.location.search)
     const roomID = params.get("roomID")
     if (roomID) {
+      console.log("roomID", roomID)
       joinRoomID = roomID
+      roomLink = window.location.href + `/?roomID=${roomID}`
+    }
+  })
+
+  $effect(() => {
+    if (ws?.roomID) {
+      roomLink = window.location.href + `/?roomID=${ws.roomID}`
     }
   })
 
   function onClickModalButton() {
-    if (!gameState || gameState.ws.connectionStatus !== CONNECTION_STATUS.CONNECTED) return
+    if (!ws || ws.connectionStatus !== CONNECTION_STATUS.CONNECTED || !gameVersion) return
     
-    console.log("clicked")
-    if (gameState.roomID) {
-
-    }
     if (joinRoomID) {
-      gameState.ws.send({
+      const params = new URLSearchParams(roomLink.split("/").at(-1))
+      const roomID = params.get("roomID")
+      console.log("parsed: ", roomLink, roomID)
+      ws.send({
         type: OUT_MESSAGES.JOIN_ROOM,
-        roomID: joinRoomID
+        roomID: roomID || joinRoomID
       } as JoinRoomMessage);
-    } else if (!joinRoomID && !gameState.roomID) {
-      gameState.ws.send({
+    } else if (!joinRoomID && !ws.roomID) {
+      ws.send({
         type: OUT_MESSAGES.CREATE_ROOM
       } as CreateRoomMessage);
     } else {
-      gameState.handleStartGame()
+      ws.handleStartGame(gameVersion)
     }
   }
 
@@ -106,17 +93,15 @@
 				<SelectGame bind:gameVersion />
 			</div>
 		{/if}
-
-		<DisplayRoomLink {roomLink} />
+    
+    {#if !(ws?.roomID && !ws.isRoomOwner)}
+		<DisplayRoomLink isRoomOwner={ws?.isRoomOwner || false} bind:roomLink />
+    {/if}
 
 		<div class="footer">
-			<!-- {#if !(joinRoomID && gameState?.playerID)} -->
-				<button onclick={onClickModalButton} class="button" disabled={Boolean(joinRoomID && gameState?.playerID)}>
+				<button onclick={onClickModalButton} class="button" disabled={Boolean(joinRoomID && ws?.playerID)}>
 					{modalButtonText}
 				</button>
-			<!-- {:else} -->
-				<!-- <p class="waiting-message">Waiting for the game to start...</p> -->
-			<!-- {/if} -->
 		</div>
 	</div>
 </Modal>
@@ -204,17 +189,4 @@
 	cursor: not-allowed;
 	pointer-events: none;
 }
-
-	.modal-inner .waiting-message {
-		margin-top: 1rem;
-		font-size: 1.125rem; /* 18px */
-		font-weight: 500;
-		color: #666;
-		background: #f8f9fa;
-		padding: 0.75rem 1rem;
-		border-radius: 6px;
-		text-align: center;
-		border: 1px solid #ddd;
-		max-width: fit-content;
-	}
 </style>

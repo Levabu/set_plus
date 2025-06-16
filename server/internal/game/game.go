@@ -8,13 +8,19 @@ import (
 	"github.com/google/uuid"
 )
 
-func NewGame(cfg GameConfig) (*Game, error) {
+func NewGame(gameVersion GameVersion) (*Game, error) {
 	cards := make(map[uuid.UUID]Card)
 	players := make(map[uuid.UUID]Player)
 
+	gameConfig, exists := GameVersions[gameVersion]
+	if !exists {
+		return nil, fmt.Errorf("unsupported game version: %s", gameVersion)
+	}
+
 	game := &Game{
 		GameID:     uuid.New(),
-		GameConfig: cfg,
+		GameVersion: gameVersion,
+		GameConfig: gameConfig,
 		Cards:      &cards,
 		Players:    &players,
 	}

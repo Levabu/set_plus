@@ -19,11 +19,6 @@ func (h *Handler) handleJoinRoom(client *server.Client, rawMsg json.RawMessage) 
 		return err
 	}
 
-	// res := JoinedRoomMessage{
-	// 	BaseOutMessage: BaseOutMessage{Type: JoinedRoom},
-	// 	RoomID:         joinedRoom.ID,
-	// }
-
 	if joinedRoom.Started {
 		return SendError(client, ErrorMessage{
 			RefType: JoinRoom,
@@ -43,6 +38,5 @@ func (h *Handler) handleJoinRoom(client *server.Client, rawMsg json.RawMessage) 
 		return err
 	}
 
-	// SendJSON(client, res)
 	return nil
 }

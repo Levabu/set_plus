@@ -1,20 +1,9 @@
 <script lang="ts">
 	import Board from "$lib/components/Board.svelte";
-	import SelectGame from "$lib/components/SelectGame.svelte";
-	import type { GameVersionKey } from "$lib/engine/types";
-	import { GameVersions } from "$lib/engine/types";
-
-
-
-  // let gameVersion = $state(GameVersions.classic.key) as GameVersionKey | null;
 </script>
 
 <div class="page">
-  <!-- <SelectGame bind:gameVersion={gameVersion} /> -->
-  <!-- {#if gameVersion !== null} -->
-    <!-- <Board gameVersion={gameVersion}/> -->
     <Board />
-  <!-- {/if} -->
 </div>
 
 <style>

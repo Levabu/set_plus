@@ -1,11 +1,11 @@
 <script lang="ts">
   interface Props {
-    roomLink: string
+    roomLink: string;
+    isRoomOwner: boolean;
   }
-  let { roomLink = $bindable() }: Props = $props();
+  let { roomLink = $bindable(""), isRoomOwner }: Props = $props();
 
   let copied = $state(false);
-  // let value = $state<string>(roomLink)
 
   async function copyToClipboard() {
     await navigator.clipboard.writeText(roomLink);
@@ -15,7 +15,7 @@
 </script>
 
 <div class="copy-input-wrapper">
-  <input class="copy-input" type="text" bind:value={roomLink} />
+  <input class="copy-input" type="text" bind:value={roomLink} readonly={isRoomOwner} />
   <button class="copy-button" onclick={copyToClipboard}>
     {#if copied}
       ✅
@@ -34,7 +34,6 @@
   border-radius: 6px;
   background: #f9fafb;
   border: 1px solid #ccc;
-  /* max-width: fit-content; */
 }
 
 .copy-input {
@@ -44,7 +43,6 @@
   font-size: 1rem;
   font-weight: 600;
   outline: none;
-  /* width: 10ch; */
   width: 100%;
 }
 
