@@ -1,5 +1,5 @@
 import { ROTATIONS, type GameVersion } from "$lib/engine/types";
-import { OUT_MESSAGES, IN_MESSAGES, type StartGameMessage, type StartedGameMessage, type CreateRoomMessage, type CreatedRoomMessage, type JoinedRoomMessage, type CheckSetResultMessage, type CheckSetMessage, type ChangedGameStateMessage } from "$lib/ws/messages";
+import { OUT_MESSAGES, IN_MESSAGES, type StartGameMessage, type StartedGameMessage, type CreateRoomMessage, type CreatedRoomMessage, type JoinedRoomMessage, type CheckSetResultMessage, type CheckSetMessage, type ChangedGameStateMessage, type Player, type GameOverMessage } from "$lib/ws/messages";
 import { CONNECTION_STATUS, WS } from "$lib/ws/ws.svelte";
 import { GameState } from "./GameState.svelte";
 
@@ -7,7 +7,13 @@ export class MultiPlayerGameState extends GameState {
   ws: WS;
   roomID: string = $state<string>("");
   playerID: string = $state<string>("");
+  players: Record<string, Player> = $state<Record<string, Player>>({});
   private hasGameStarted: boolean = $state<boolean>(false);
+  score = $derived((() => {
+    const player = this.players[this.playerID];
+    return player ? player.score : 0;
+  })())
+  isOver: boolean = $state<boolean>(false);
 
   constructor(gameVersion: GameVersion) {
     console.log("MultiPlayerGameState constructor called with gameVersion:", gameVersion);
@@ -37,13 +43,17 @@ export class MultiPlayerGameState extends GameState {
           this.handleJoinedRoomMessage(lastMessage as JoinedRoomMessage);
           break;
         case IN_MESSAGES.STARTED_GAME:
-          this.handleGameCreatedMessage(lastMessage as StartedGameMessage);
+          this.handleStartedGameMessage(lastMessage as StartedGameMessage);
           break;
         case IN_MESSAGES.CHECK_SET_RESULT:
           this.handleCheckSetResultMessage(lastMessage as CheckSetResultMessage);
           break;
         case IN_MESSAGES.CHANGED_GAME_STATE:
           this.handleGameStateUpdate(lastMessage as ChangedGameStateMessage);
+          break;
+        case IN_MESSAGES.GAME_OVER:
+          this.handleGameOverMessage(lastMessage as GameOverMessage);
+          break;
         default:
           console.warn("Unhandled message type:");
           break;
@@ -88,7 +98,7 @@ export class MultiPlayerGameState extends GameState {
     }
   }
 
-  handleGameCreatedMessage(message: StartedGameMessage): void {
+  handleStartedGameMessage(message: StartedGameMessage): void {
     this.id = message.gameID;
     this.hasGameStarted = true;
     // Convert message.deck to Card[] if necessary
@@ -103,6 +113,7 @@ export class MultiPlayerGameState extends GameState {
       shading: card.shading,
       rotation: card.rotation || ROTATIONS.vertical,
     }));
+    this.players = message.players
   }
 
   handleCheckSetResultMessage(message: CheckSetResultMessage): void {
@@ -110,7 +121,7 @@ export class MultiPlayerGameState extends GameState {
     if (!isSet) {
       return
     }
-    this.score += 1;
+    // this.score += 1;
     this.resetSelectedCards();
   }
 
@@ -131,5 +142,12 @@ export class MultiPlayerGameState extends GameState {
       shading: card.shading,
       rotation: card.rotation || ROTATIONS.vertical,
     }));
+    this.players = message.players
+  }
+
+  handleGameOverMessage(message: GameOverMessage): void {
+    this.isOver = true;
+    // Handle game over logic, e.g., display final scores
+    console.log("Game over! Final scores:", message.players);
   }
 }

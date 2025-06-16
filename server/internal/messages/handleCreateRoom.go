@@ -21,7 +21,7 @@ func (h *Handler) handleCreateRoom(client *server.Client, rawMsg json.RawMessage
 		return err
 	}
 
-	if err := h.Cfg.Presence.JoinRoom(context.Background(), newRoom.ID, client.ID); err != nil {
+	if err := h.Cfg.Presence.JoinRoom(context.Background(), newRoom.ID, client); err != nil {
 		return err
 	}
 

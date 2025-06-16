@@ -31,7 +31,7 @@ func (h *Handler) handleJoinRoom(client *server.Client, rawMsg json.RawMessage) 
 		})
 	}
 
-	if err := h.Cfg.Presence.JoinRoom(context.Background(), joinedRoom.ID, client.ID); err != nil {
+	if err := h.Cfg.Presence.JoinRoom(context.Background(), joinedRoom.ID, client); err != nil {
 		return err
 	}
 

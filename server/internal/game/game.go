@@ -10,11 +10,13 @@ import (
 
 func NewGame(cfg GameConfig) (*Game, error) {
 	cards := make(map[uuid.UUID]Card)
+	players := make(map[uuid.UUID]Player)
 
 	game := &Game{
 		GameID:     uuid.New(),
 		GameConfig: cfg,
 		Cards:      &cards,
+		Players:    &players,
 	}
 
 	return game, nil
@@ -25,7 +27,7 @@ func (g *Game) GenerateCards() {
 	combination := make([]string, 0)
 
 	generateCombinations(g.GameConfig.Features, g.GameConfig.VariationsNumber, 0, combination, &cards)
-	
+
 	for i := range cards {
 		cards[i].CardID = uuid.New()
 		cards[i].IsVisible = false
@@ -97,17 +99,17 @@ func (g *Game) IsSet(cards []Card) bool {
 	if len(cards) != g.GameConfig.VariationsNumber {
 		return false
 	}
-	
+
 	for _, feature := range g.GameConfig.Features {
-	values := make(map[string]struct{})
-	for _, card := range cards {
-		val := getFeatureValue(card, feature)
-		values[val] = struct{}{}
+		values := make(map[string]struct{})
+		for _, card := range cards {
+			val := getFeatureValue(card, feature)
+			values[val] = struct{}{}
+		}
+		if len(values) != 1 && len(values) != g.GameConfig.VariationsNumber {
+			return false
+		}
 	}
-	if len(values) != 1 && len(values) != g.GameConfig.VariationsNumber {
-		return false
-	}
-}
 	return true
 }
 
@@ -123,7 +125,7 @@ func (g *Game) FindSet() []Card {
 
 	var findCombinations func(startIndex int) []Card
 	findCombinations = func(startIndex int) []Card {
-		if (len(c) == g.GameConfig.VariationsNumber) {
+		if len(c) == g.GameConfig.VariationsNumber {
 			if g.IsSet(c) {
 				return c
 			}
@@ -249,9 +251,38 @@ func (g *Game) DiscardCards(cards []Card) {
 		card.IsVisible = false
 		g.Deck[i] = card
 		handled++
-		
+
 		if handled == len(cards) {
 			break
 		}
 	}
+}
+
+func (g *Game) GetWinners() []Player {
+	maxScore := 0
+	winners := make([]Player, 0)
+	for _, player := range *g.Players {
+		if player.Score > maxScore {
+			maxScore = player.Score
+		}
+	}
+	for _, player := range *g.Players {
+		if player.Score == maxScore {
+			winners = append(winners, player)
+		}
+	}
+	return winners
+}
+
+func (g *Game) IsGameOver() bool {
+	inDeck := 0
+	for _, card := range g.Deck {
+		if !card.IsDiscarded && !card.IsVisible {
+			inDeck++
+		}
+	}
+	if inDeck == 0 && !g.IsSetAvailable() {
+		return true
+	}
+	return false
 }

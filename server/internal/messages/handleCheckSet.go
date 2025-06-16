@@ -42,6 +42,7 @@ func (h *Handler) handleCheckSet(client *server.Client, rawMsg json.RawMessage) 
 		})
 	}
 
+	// handle
 	cards := make([]game.Card, len(msg.CardIDs))
 	for i, id := range msg.CardIDs {
 		card, ok := (*gameState.Cards)[id]
@@ -69,13 +70,26 @@ func (h *Handler) handleCheckSet(client *server.Client, rawMsg json.RawMessage) 
 	gameState.DealCards(gameState.GameConfig.VariationsNumber)
 	gameState.DealCardsUntilSetAvailable(gameState.GameConfig.VariationsNumber, 30)
 
+	player := (*gameState.Players)[client.ID]
+	player.Score += 1
+	(*gameState.Players)[client.ID] = player
+
+	gameOver := gameState.IsGameOver()
+
 	err = h.Cfg.Store.SetGameState(context.Background(), gameState)
 	if err != nil {
 		return err
 	}
 
+	var eventType room.EventType
+	if gameOver {
+		eventType = room.GameOver
+	} else {
+		eventType = room.ChangedGameState
+	}
+
 	h.Cfg.Store.PublishRoomUpdate(context.Background(), r.ID, room.Event{
-		Type: room.ChangedGameState,
+		Type: eventType,
 		CliendID: client.ID,
 	})
 

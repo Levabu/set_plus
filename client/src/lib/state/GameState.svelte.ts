@@ -7,7 +7,6 @@ export class GameState {
   game: Game;
   id!: string;
   gameVersion!: GameVersion;
-  score: number = $state(0);
 
   deck: Card[] = $state<Card[]>([]);
   selectedIds: Card["id"][] = $derived(this.deck.filter(card => card.isSelected).map(card => card.id))

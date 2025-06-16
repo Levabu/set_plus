@@ -33,6 +33,15 @@ func (h *Handler) handleStartGame(client *server.Client, rawMsg json.RawMessage)
 		return err
 	}
 
+	players, err := h.Cfg.Presence.GetRoomMembers(context.Background(), r.ID)
+	if err != nil {
+		return err
+	}
+	for _, player := range players {
+		player.Score = 0
+		(*game.Players)[player.ID] = player
+	}
+
 	if err = h.Cfg.Store.SetGameState(context.Background(), game); err != nil {
 		return err
 	}

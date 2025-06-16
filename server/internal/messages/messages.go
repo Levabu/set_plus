@@ -73,11 +73,12 @@ type BaseOutMessage struct {
 }
 
 const (
-	CreatedRoom    OutMessageType = "CREATED_ROOM"
-	JoinedRoom     OutMessageType = "JOINED_ROOM"
-	StartedGame    OutMessageType = "STARTED_GAME"
-	CheckSetResult OutMessageType = "CHECK_SET_RESULT"
+	CreatedRoom      OutMessageType = "CREATED_ROOM"
+	JoinedRoom       OutMessageType = "JOINED_ROOM"
+	StartedGame      OutMessageType = "STARTED_GAME"
+	CheckSetResult   OutMessageType = "CHECK_SET_RESULT"
 	ChangedGameState OutMessageType = "CHANGED_GAME_STATE"
+	GameOver         OutMessageType = "GAME_OVER"
 )
 
 type CreatedRoomMessage struct {
@@ -94,8 +95,9 @@ type JoinedRoomMessage struct {
 
 type StartedGameMessage struct {
 	BaseOutMessage
-	GameID uuid.UUID   `json:"gameID"`
-	Deck   []game.Card `json:"deck"`
+	GameID  uuid.UUID                 `json:"gameID"`
+	Deck    []game.Card               `json:"deck"`
+	Players map[uuid.UUID]game.Player `json:"players"`
 }
 
 type CheckSetResultMessage struct {
@@ -105,8 +107,15 @@ type CheckSetResultMessage struct {
 
 type ChangedGameStateMessage struct {
 	BaseOutMessage
-	GameID uuid.UUID   `json:"gameID"`
-	Deck   []game.Card `json:"deck"`
+	GameID  uuid.UUID                 `json:"gameID"`
+	Deck    []game.Card               `json:"deck"`
+	Players map[uuid.UUID]game.Player `json:"players"`
+}
+
+type GameOverMessage struct {
+	BaseOutMessage
+	GameID  uuid.UUID                 `json:"gameID"`
+	Players map[uuid.UUID]game.Player `json:"players"`
 }
 
 // Error

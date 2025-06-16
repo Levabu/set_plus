@@ -11,18 +11,18 @@ import (
 
 func (h *Handler) BroadcastToRoom(ctx context.Context, roomID uuid.UUID, payload interface{}) error {
 	// log.Println("getting room members")
-	cliendsIDs, err := h.Cfg.Presence.GetRoomMembers(ctx, roomID)
+	players, err := h.Cfg.Presence.GetRoomMembers(ctx, roomID)
 	if err != nil {
 		return err
 	}
 	// log.Println("room members:", cliendsIDs)
 
-	for _, clientID := range cliendsIDs {
+	for _, player := range players {
 		// log.Println(h.Cfg.LocalClients)
 		if h.Cfg.LocalClients == nil {
 			continue
 		}
-		client := h.Cfg.LocalClients.Get(clientID)
+		client := h.Cfg.LocalClients.Get(player.ID)
 		if client == nil {
 			continue
 		}
@@ -52,27 +52,40 @@ func (h *Handler) HandleRoomEvent(id uuid.UUID, event room.Event) {
 		if err != nil {
 			return
 		}
-		log.Println(room, event)
 		h.BroadcastToRoom(context.Background(), id, StartedGameMessage{
 			BaseOutMessage: BaseOutMessage{Type: StartedGame},
 			GameID:         room.GameID,
 			Deck:           game.Deck,
+			Players:        *game.Players,
 		})
 	case room.ChangedGameState:
 		room, err := h.Cfg.Store.GetRoom(context.Background(), id)
 		if err != nil {
 			return
 		}
-		log.Println("changed game in room:", room.ID)
 		game, err := h.Cfg.Store.GetGameState(context.Background(), room.GameID)
 		if err != nil {
 			return
 		}
-		log.Println(room, event)
 		h.BroadcastToRoom(context.Background(), id, ChangedGameStateMessage{
 			BaseOutMessage: BaseOutMessage{Type: ChangedGameState},
 			GameID:         room.GameID,
 			Deck:           game.Deck,
+			Players:        *game.Players,
+		})
+	case room.GameOver:
+		room, err := h.Cfg.Store.GetRoom(context.Background(), id)
+		if err != nil {
+			return
+		}
+		game, err := h.Cfg.Store.GetGameState(context.Background(), room.GameID)
+		if err != nil {
+			return
+		}
+		h.BroadcastToRoom(context.Background(), id, GameOverMessage{
+			BaseOutMessage: BaseOutMessage{Type: GameOver},
+			GameID: game.GameID,
+			Players: *game.Players,
 		})
 	}
 }

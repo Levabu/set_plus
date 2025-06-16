@@ -31,7 +31,7 @@ export interface CheckSetMessage {
   gameID: string;
 }
 
-export type OutMessage = 
+export type OutMessage =
   | StartGameMessage
   | CreateRoomMessage
   | JoinRoomMessage
@@ -47,12 +47,16 @@ export const IN_MESSAGES = {
   STARTED_GAME: 'STARTED_GAME',
   CHECK_SET_RESULT: 'CHECK_SET_RESULT',
   CHANGED_GAME_STATE: 'CHANGED_GAME_STATE',
+  GAME_OVER: 'GAME_OVER',
 } as const;
+
+export type Player = { id: string; nickname: string; score: number }
 
 export interface StartedGameMessage {
   readonly type: typeof IN_MESSAGES.STARTED_GAME;
   gameID: string;
   deck: Card[]
+  players: Record<string, Player>;
 }
 
 export interface CreatedRoomMessage {
@@ -78,15 +82,23 @@ export interface ChangedGameStateMessage {
   gameID: string;
   deck: Card[];
   playerID: string;
+  players: Record<string, Player>;
+}
+
+export interface GameOverMessage {
+  readonly type: typeof IN_MESSAGES.GAME_OVER;
+  gameID: string;
+  players: Record<string, Record<string, string | number>>;
 }
 
 export type InMessage =
   (
-    | StartedGameMessage  
+    | StartedGameMessage
     | CreatedRoomMessage
     | JoinedRoomMessage
     | CheckSetResultMessage
     | ChangedGameStateMessage
+    | GameOverMessage
   ) & {
     isProcessed?: boolean;
     error?: string | null;

@@ -8,6 +8,7 @@ const (
 	JoinedPlayer     EventType = "JOINED_PLAYER"
 	StartedGame      EventType = "STARTED_GAME"
 	ChangedGameState EventType = "CHANGED_GAME_STATE"
+	GameOver         EventType = "GAME_OVER"
 )
 
 type Event struct {
