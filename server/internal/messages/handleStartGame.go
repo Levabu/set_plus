@@ -26,8 +26,12 @@ func (h *Handler) handleStartGame(client *server.Client, rawMsg json.RawMessage)
 	}
 	r.GameID = game.GameID
 
-	// todo: only allow owner to start
-	// if r.OwnerID != client.ID
+	if r.OwnerID != client.ID {
+		return SendError(client, ErrorMessage{
+			RefType: StartGame,
+			Reason: "only owner of the room can start the game",
+		})
+	}
 
 	if err = h.Cfg.Store.SetRoom(context.Background(), r); err != nil {
 		return err
