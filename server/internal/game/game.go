@@ -286,3 +286,14 @@ func (g *Game) IsGameOver() bool {
 	}
 	return false
 }
+
+func (g *Game) GetInPlayCards() []Card {
+	cards := make([]Card, 0)
+	for _, card := range g.Deck {
+		if card.IsDiscarded || !card.IsVisible {
+			continue
+		}
+		cards = append(cards, card)
+	}
+	return cards
+}

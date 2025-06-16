@@ -48,14 +48,13 @@ func (h *Handler) HandleRoomEvent(id uuid.UUID, event room.Event) {
 		}
 		log.Println("starteg game in room:", room.ID)
 		game, err := h.Cfg.Store.GetGameState(context.Background(), room.GameID)
-		// log.Println("game state on start:", game)
 		if err != nil {
 			return
 		}
 		h.BroadcastToRoom(context.Background(), id, StartedGameMessage{
 			BaseOutMessage: BaseOutMessage{Type: StartedGame},
 			GameID:         room.GameID,
-			Deck:           game.Deck,
+			Deck:           game.GetInPlayCards(),
 			Players:        *game.Players,
 		})
 	case room.ChangedGameState:
@@ -70,7 +69,7 @@ func (h *Handler) HandleRoomEvent(id uuid.UUID, event room.Event) {
 		h.BroadcastToRoom(context.Background(), id, ChangedGameStateMessage{
 			BaseOutMessage: BaseOutMessage{Type: ChangedGameState},
 			GameID:         room.GameID,
-			Deck:           game.Deck,
+			Deck:           game.GetInPlayCards(),
 			Players:        *game.Players,
 		})
 	case room.GameOver:
