@@ -4,14 +4,17 @@
 	import type { GameVersionKey } from "$lib/engine/types";
 	import { GameVersions } from "$lib/engine/types";
 
-  let gameVersion = $state(GameVersions.classic.key) as GameVersionKey | null;
+
+
+  // let gameVersion = $state(GameVersions.classic.key) as GameVersionKey | null;
 </script>
 
 <div class="page">
-  <SelectGame bind:gameVersion={gameVersion} />
-  {#if gameVersion !== null}
-    <Board gameVersion={gameVersion}/>
-  {/if}
+  <!-- <SelectGame bind:gameVersion={gameVersion} /> -->
+  <!-- {#if gameVersion !== null} -->
+    <!-- <Board gameVersion={gameVersion}/> -->
+    <Board />
+  <!-- {/if} -->
 </div>
 
 <style>

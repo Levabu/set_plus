@@ -6,9 +6,10 @@ import { GameState } from "./GameState.svelte";
 export class MultiPlayerGameState extends GameState {
   ws: WS;
   roomID: string = $state<string>("");
+  isRoomOwner: boolean = $state(false);
   playerID: string = $state<string>("");
   players: Record<string, Player> = $state<Record<string, Player>>({});
-  private hasGameStarted: boolean = $state<boolean>(false);
+  hasGameStarted: boolean = $state<boolean>(false);
   score = $derived((() => {
     const player = this.players[this.playerID];
     return player ? player.score : 0;
@@ -20,13 +21,13 @@ export class MultiPlayerGameState extends GameState {
     super(gameVersion);
     this.ws = new WS("ws://localhost:8080/ws")
     
-    $effect(() => {
-      if (this.roomID === "" && this.ws.connectionStatus === CONNECTION_STATUS.CONNECTED) {
-        this.ws.send({
-          type: OUT_MESSAGES.CREATE_ROOM
-        } as CreateRoomMessage);
-      }
-    })
+    // $effect(() => {
+    //   if (this.roomID === "" && this.ws.connectionStatus === CONNECTION_STATUS.CONNECTED) {
+    //     this.ws.send({
+    //       type: OUT_MESSAGES.CREATE_ROOM
+    //     } as CreateRoomMessage);
+    //   }
+    // })
 
     $effect(() => {
       if (this.ws.messages.length === 0) return
@@ -77,9 +78,20 @@ export class MultiPlayerGameState extends GameState {
     console.log("Room created with ID:", message.roomID);
     this.roomID = message.roomID;
     this.playerID = message.playerID;
+    this.isRoomOwner = true
 
     // temp
-    if (!this.hasGameStarted) {
+    // if (!this.hasGameStarted) {
+    //   this.ws.send({
+    //     type: OUT_MESSAGES.START_GAME,
+    //     gameVersion: this.gameVersion.key,
+    //     roomID: this.roomID
+    //   } as StartGameMessage);
+    // }
+  }
+
+  handleStartGame(): void {
+    if (!this.hasGameStarted && this.isRoomOwner) {
       this.ws.send({
         type: OUT_MESSAGES.START_GAME,
         gameVersion: this.gameVersion.key,
@@ -90,6 +102,7 @@ export class MultiPlayerGameState extends GameState {
 
   handleJoinedRoomMessage(message: JoinedRoomMessage): void {
     console.log("Joined room:", message.roomID, "as player:", message.playerID);
+    if (this.playerID) return
     this.roomID = message.roomID;
     this.playerID = message.playerID;
 

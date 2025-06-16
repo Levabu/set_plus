@@ -10,8 +10,6 @@
 </script>
 
 <div class="game-version-selector">
-  <h3 class="legend">Choose Game Version</h3>
-  
   <RadioGroup.Root bind:value={gameVersion} class="radio-group">
   {#each Object.entries(GameVersions) as [key, version]}
     <RadioGroup.Item value={key}>
@@ -49,6 +47,10 @@
   font-size: 1.2rem;
   font-weight: 600;
   color: #333;
+}
+
+:global(.game-version-selector .title) {
+  color: white;
 }
 
 :global(.game-version-selector .radio-group) {
