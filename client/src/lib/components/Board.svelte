@@ -20,6 +20,12 @@
     return "Start Game"
   })())
   let roomLink = $state("")
+  let cardsLeft = $derived((() => {
+    if (!gameState) return 0
+    const total = gameState.variationsNumber ** gameState.features.length
+    const discarded = Object.values(gameState.players).map(p => p.score).reduce((cur, acc) => acc + cur) * gameState.variationsNumber
+    return total - discarded - gameState.inPlayCards.length
+  })())
 
   // $inspect({
   //   playerID: gameState?.playerID,
@@ -108,7 +114,8 @@
 
 {#if gameState?.hasGameStarted}
 	<div class="game-info">
-		<span>In Play Cards: {gameState.inPlayCards.length}</span>
+		<span>Cards In Play: {gameState.inPlayCards.length}</span>
+    <span>Cards Left: {cardsLeft}</span>
 		<span>Sets found: {gameState.score}</span>
 	</div>
 	<div class="board">

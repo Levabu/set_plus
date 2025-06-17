@@ -60,5 +60,6 @@ export class MultiPlayerGameState extends GameState {
     }));
     this.players = message.players
     console.log("Game over! Final scores:", message.players);
+    alert("Game Over!")
   }
 }

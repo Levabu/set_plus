@@ -55,7 +55,6 @@ export class WS {
       this.handleMessage(lastMessage)
 
       lastMessage.isProcessed = true;
-      console.log(this.messages.filter(m => !m.isProcessed).length)
     })
 
     $effect(() => {
