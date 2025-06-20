@@ -1,6 +1,6 @@
 import { GameVersions, ROTATIONS, type GameVersion, type GameVersionKey } from "$lib/engine/types";
 import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
-import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage } from "./messages";
+import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage, type ErrorMessage } from "./messages";
 
 export const CONNECTION_STATUS = {
   CONNECTED: 'connected',
@@ -16,6 +16,10 @@ export class WS {
   roomID: string = $state<string>("");
   playerID: string = $state<string>("");
   isRoomOwner: boolean = $state(false);
+  errors = $state<Record<string, string>>({
+    nickname: "",
+    roomLink: ""
+  })
 
   constructor(url: string = "ws://localhost:8080") {
     let ws = new WebSocket(url)
@@ -90,8 +94,11 @@ export class WS {
       case IN_MESSAGES.GAME_OVER:
         this.game?.handleGameOverMessage(message as GameOverMessage);
         break;
+      case IN_MESSAGES.ERROR:
+        this.handleErrorMessage(message as ErrorMessage)
+        break;
       default:
-        console.warn("Unhandled message type:");
+        console.warn("Unhandled message type:", message);
         break;
     }
   }
@@ -145,6 +152,12 @@ export class WS {
         gameVersion: gameVersion,
         roomID: this.roomID
       } as StartGameMessage);
+    }
+  }
+
+  handleErrorMessage(message: ErrorMessage): void {
+    this.errors = {
+      [message.field]: message.reason
     }
   }
 

@@ -33,6 +33,8 @@ func (h *Handler) handleStartGame(client *server.Client, rawMsg json.RawMessage)
 		})
 	}
 
+	r.Started = true
+
 	if err = h.Cfg.Store.SetRoom(context.Background(), r); err != nil {
 		return err
 	}

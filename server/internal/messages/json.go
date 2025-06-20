@@ -15,10 +15,10 @@ func SendJSON(client *server.Client, payload interface{}) error {
 
 func SendError(client *server.Client, msg ErrorMessage) error {
 	return SendJSON(client, struct{ 
-		Type string `json:"error"`
+		Type OutMessageType `json:"type"`
 		ErrorMessage
 	}{
-		Type: "error",
+		Type: ErrorOut,
 		ErrorMessage: msg,
 	})
 }

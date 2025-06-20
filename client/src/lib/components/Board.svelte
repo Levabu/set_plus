@@ -2,30 +2,38 @@
 	import { GameVersions, type GameVersionKey } from "$lib/engine/types";
 	import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
 	import Card from "./Card.svelte";
-	import Modal from "./Modal.svelte";
+	import Modal from "./lib/Modal.svelte";
 	import SelectGame from "./SelectGame.svelte";
 	import { CONNECTION_STATUS, WS } from "$lib/ws/ws.svelte";
 	import { OUT_MESSAGES, type CreateRoomMessage, type JoinRoomMessage } from "$lib/ws/messages";
-	import DisplayRoomLink from "./DisplayRoomLink.svelte";
+	import FormInput from "./lib/FormInput.svelte";
+	import { generateNickname, LS_NICKNAME_KEY } from "$lib/utils/nicknames";
+	import { browser } from "$app/environment";
 
   let ws = $state<WS | null>(new WS("ws://localhost:8080/ws"))
   let gameState = $derived<MultiPlayerGameState | null>(ws?.game || null);
   let gameVersion = $state(GameVersions.classic.key) as GameVersionKey | null;
-  let isModalOpen = $derived<boolean>(!ws?.game?.hasGameStarted)
-  let joinRoomID = $state("")
-  let modalButtonText = $derived((() => {
-    if (joinRoomID && !ws?.playerID) return "Join Room"
-    if (joinRoomID && ws?.playerID) return "Waiting for the game to start..."
-    if (!ws?.roomID) return "Create Room"
-    return "Start Game"
-  })())
-  let roomLink = $state("")
-  let cardsLeft = $derived((() => {
+	let cardsLeft = $derived((() => {
     if (!gameState) return 0
     const total = gameState.variationsNumber ** gameState.features.length
     const discarded = Object.values(gameState.players).map(p => p.score).reduce((cur, acc) => acc + cur) * gameState.variationsNumber
     return total - discarded - gameState.inPlayCards.length
   })())
+	
+  let isModalOpen = $derived<boolean>(!ws?.game?.hasGameStarted)
+  let joinRoomID = $state("")
+	let roomLink = $state("")
+	let roomLinkError = $state("")
+  let modalButtonText = $derived((() => {
+    if (joinRoomID && !ws?.playerID) return "Join Room"
+    if (joinRoomID && ws?.playerID) return "Waiting for the game to start..."
+		if (!joinRoomID && !ws?.playerID && roomLink) return "Join Room"
+    if (!ws?.roomID) return "Create Room"
+    return "Start Game"
+  })())
+	let nickname = $state(generateNickname())
+	let nicknameError = $state("")
+	let isButtonDisabled = $derived(Boolean(joinRoomID && ws?.playerID) || !!nicknameError)
 
   // $inspect({
   //   playerID: gameState?.playerID,
@@ -56,20 +64,47 @@
     }
   })
 
+	$effect(() => {
+		if (browser) {
+			const stored = localStorage.getItem(LS_NICKNAME_KEY)
+			if (stored) nickname = stored
+		}
+	})
+
+	$effect(() => {
+		if (!ws) return
+		if (ws.errors.nickname) {
+			nicknameError = ws.errors.nickname
+		}
+		if (ws.errors.roomLink) {
+			roomLinkError = ws.errors.roomLink
+		}
+	})
+
+	function isValidNickname() {
+		return !(!nickname || nickname.length > 20)
+	}
+
   function onClickModalButton() {
     if (!ws || ws.connectionStatus !== CONNECTION_STATUS.CONNECTED || !gameVersion) return
+
+		if (!isValidNickname()) {
+			nicknameError = "Nickname should be 1 to 20 characters long"
+			return
+		}
     
-    if (joinRoomID) {
+    if (joinRoomID || (roomLink && !ws.playerID)) {
       const params = new URLSearchParams(roomLink.split("/").at(-1))
       const roomID = params.get("roomID")
-      console.log("parsed: ", roomLink, roomID)
       ws.send({
         type: OUT_MESSAGES.JOIN_ROOM,
-        roomID: roomID || joinRoomID
+        roomID: roomID || joinRoomID,
+				nickname
       } as JoinRoomMessage);
     } else if (!joinRoomID && !ws.roomID) {
       ws.send({
-        type: OUT_MESSAGES.CREATE_ROOM
+        type: OUT_MESSAGES.CREATE_ROOM,
+				nickname
       } as CreateRoomMessage);
     } else {
       ws.handleStartGame(gameVersion)
@@ -99,13 +134,26 @@
 				<SelectGame bind:gameVersion />
 			</div>
 		{/if}
+
+		<FormInput
+			bind:value={nickname}
+			bind:error={nicknameError}
+			placeholder="Nickname (1 to 20 characters)"
+			transformInput={(v) => v.trim().slice(0, 20)}
+		/>
     
-    {#if !(ws?.roomID && !ws.isRoomOwner)}
-		<DisplayRoomLink isRoomOwner={ws?.isRoomOwner || false} bind:roomLink />
+    {#if !(ws?.roomID && !ws.isRoomOwner) || roomLinkError}
+		<FormInput
+			bind:value={roomLink}
+			bind:error={roomLinkError}
+			placeholder="Paste a room url"
+			readonly={ws?.isRoomOwner || false}
+			showClipboard={true}
+		/>
     {/if}
 
 		<div class="footer">
-				<button onclick={onClickModalButton} class="button" disabled={Boolean(joinRoomID && ws?.playerID)}>
+				<button onclick={onClickModalButton} class="button" disabled={isButtonDisabled}>
 					{modalButtonText}
 				</button>
 		</div>

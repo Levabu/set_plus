@@ -16,11 +16,13 @@ export interface StartGameMessage {
 
 export interface CreateRoomMessage {
   readonly type: typeof OUT_MESSAGES.CREATE_ROOM;
+  nickname: string;
 }
 
 export interface JoinRoomMessage {
   readonly type: typeof OUT_MESSAGES.JOIN_ROOM;
   roomID: string;
+  nickname: string;
 }
 
 export interface CheckSetMessage {
@@ -48,6 +50,7 @@ export const IN_MESSAGES = {
   CHECK_SET_RESULT: 'CHECK_SET_RESULT',
   CHANGED_GAME_STATE: 'CHANGED_GAME_STATE',
   GAME_OVER: 'GAME_OVER',
+  ERROR: 'ERROR'
 } as const;
 
 export type Player = { id: string; nickname: string; score: number }
@@ -93,6 +96,13 @@ export interface GameOverMessage {
   players: Record<string, Player>;
 }
 
+export interface ErrorMessage {
+  readonly type: typeof IN_MESSAGES.ERROR;
+  refType: keyof typeof OUT_MESSAGES;
+  field: string;
+  reason: string;
+}
+
 export type InMessage =
   (
     | StartedGameMessage
@@ -101,6 +111,7 @@ export type InMessage =
     | CheckSetResultMessage
     | ChangedGameStateMessage
     | GameOverMessage
+    | ErrorMessage
   ) & {
     isProcessed?: boolean;
     error?: string | null;

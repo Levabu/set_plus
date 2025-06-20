@@ -3,6 +3,7 @@ package messages
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"server/internal/room"
 	"server/internal/server"
 
@@ -10,6 +11,19 @@ import (
 )
 
 func (h *Handler) handleCreateRoom(client *server.Client, rawMsg json.RawMessage) error {
+	var msg CreateRoomMessage
+	if err := json.Unmarshal(rawMsg, &msg); err != nil {
+		return fmt.Errorf("invalid message: %s", err.Error())
+	}
+
+	if len(msg.Nickname) < 1 || len(msg.Nickname) > 20 {
+		return SendError(client, ErrorMessage{
+			RefType: CreateRoom,
+			Field: "nickname",
+			Reason: "Nickname should be 1 to 20 charecters long",
+		})
+	}
+
 	newRoom := room.Room{
 		ID:      uuid.New(),
 		OwnerID: client.ID,

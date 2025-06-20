@@ -1,7 +1,5 @@
-<!-- Modal.svelte -->
 <script lang="ts">
   import { Dialog } from "bits-ui";
-  import { fly, fade } from "svelte/transition";
   import type { Snippet } from "svelte";
   import type { HTMLAttributes } from "svelte/elements";
   
@@ -13,9 +11,7 @@
     description?: string;
     closeOnOutsideClick?: boolean;
     closeOnEscape?: boolean;
-    portal?: string | HTMLElement;
     size?: ModalSize;
-    trigger?: Snippet<[any]>;
     children?: Snippet;
     footer?: Snippet;
   }
@@ -24,11 +20,7 @@
     open = $bindable(false),
     title = "",
     description = "",
-    // closeOnOutsideClick = true,
-    // closeOnEscape = true,
-    portal = "body",
     size = "default",
-    trigger,
     children,
     footer,
     ...restProps
@@ -44,13 +36,7 @@
   };
 </script>
 
-<Dialog.Root bind:open>
-  <Dialog.Trigger>
-    <!-- {#if trigger({props: any}: {props})}
-      {@render trigger()}
-    {/if} -->
-  </Dialog.Trigger>
-  
+<Dialog.Root bind:open>  
   <Dialog.Portal>
     <Dialog.Overlay 
       class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
@@ -74,7 +60,6 @@
         </Dialog.Title>
       {/if}
       
-      <!-- Close button -->
       <Dialog.Close
         class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-white transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:ring-offset-gray-800 dark:focus:ring-gray-600"
       >
@@ -84,7 +69,6 @@
         <span class="sr-only">Close</span>
       </Dialog.Close>
       
-      <!-- Main content area where children components are rendered -->
       <div class="modal-content">
         {#if children}
           {@render children()}

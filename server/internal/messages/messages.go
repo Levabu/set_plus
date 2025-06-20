@@ -27,9 +27,15 @@ type StartGameMessage struct {
 	RoomID      uuid.UUID
 }
 
+type CreateRoomMessage struct {
+	InMessage
+	Nickname string `json:"nickname"`
+}
+
 type JoinRoomMessage struct {
 	InMessage
-	RoomID uuid.UUID
+	RoomID   uuid.UUID
+	Nickname string `json:"nickname"`
 }
 
 type CheckSetMessage struct {
@@ -79,6 +85,7 @@ const (
 	CheckSetResult   OutMessageType = "CHECK_SET_RESULT"
 	ChangedGameState OutMessageType = "CHANGED_GAME_STATE"
 	GameOver         OutMessageType = "GAME_OVER"
+	ErrorOut         OutMessageType = "ERROR"
 )
 
 type CreatedRoomMessage struct {
@@ -123,5 +130,6 @@ type GameOverMessage struct {
 // Error
 type ErrorMessage struct {
 	RefType InMessageType `json:"refType"`
+	Field   string        `json:"field"`
 	Reason  string        `json:"reason"`
 }

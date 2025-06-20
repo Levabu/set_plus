@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"server/internal/room"
 	"server/internal/server"
 )
@@ -14,15 +15,27 @@ func (h *Handler) handleJoinRoom(client *server.Client, rawMsg json.RawMessage) 
 		return fmt.Errorf("invalid message: %s", err.Error())
 	}
 
+	if len(msg.Nickname) < 1 || len(msg.Nickname) > 20 {
+		return SendError(client, ErrorMessage{
+			RefType: JoinRoom,
+			Field: "nickname",
+			Reason: "Nickname should be 1 to 20 charecters long",
+		})
+	}
+
 	joinedRoom, err := h.Cfg.Store.GetRoom(context.Background(), msg.RoomID)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
+
+	log.Println(joinedRoom)
 
 	if joinedRoom.Started {
 		return SendError(client, ErrorMessage{
 			RefType: JoinRoom,
-			Reason: "game already started",
+			Field: "roomLink",
+			Reason: "Game already started",
 		})
 	}
 
