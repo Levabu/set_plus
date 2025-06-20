@@ -23,6 +23,7 @@ func (h *Handler) handleCreateRoom(client *server.Client, rawMsg json.RawMessage
 			Reason:  "Nickname should be 1 to 20 charecters long",
 		})
 	}
+	client.Nickname = msg.Nickname
 
 	newRoom := room.Room{
 		ID:      uuid.New(),

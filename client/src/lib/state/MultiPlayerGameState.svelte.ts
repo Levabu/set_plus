@@ -1,6 +1,5 @@
 import { ROTATIONS, type GameVersion } from "$lib/engine/types";
-import { OUT_MESSAGES, IN_MESSAGES, type StartGameMessage, type StartedGameMessage, type CreateRoomMessage, type CreatedRoomMessage, type JoinedRoomMessage, type CheckSetResultMessage, type CheckSetMessage, type ChangedGameStateMessage, type Player, type GameOverMessage } from "$lib/ws/messages";
-import { CONNECTION_STATUS, WS } from "$lib/ws/ws.svelte";
+import { type ChangedGameStateMessage, type CheckSetResultMessage, type GameOverMessage, type Player } from "$lib/ws/messages";
 import { GameState } from "./GameState.svelte";
 
 export class MultiPlayerGameState extends GameState {
@@ -14,7 +13,6 @@ export class MultiPlayerGameState extends GameState {
   isOver: boolean = $state(false);
 
   constructor(gameVersion: GameVersion) {
-    console.log("MultiPlayerGameState constructor called with gameVersion:", gameVersion);
     super(gameVersion);
   }
 

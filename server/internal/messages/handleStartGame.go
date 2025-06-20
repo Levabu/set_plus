@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"server/internal/game"
 	"server/internal/room"
 	"server/internal/server"
@@ -40,11 +41,13 @@ func (h *Handler) handleStartGame(client *server.Client, rawMsg json.RawMessage)
 	}
 
 	players, err := h.Cfg.Presence.GetRoomMembers(context.Background(), r.ID)
+	log.Println(players, err)
 	if err != nil {
 		return err
 	}
 	for _, player := range players {
 		player.Score = 0
+		log.Println(player)
 		(*game.Players)[player.ID] = player
 	}
 
