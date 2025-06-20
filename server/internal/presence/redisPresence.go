@@ -46,7 +46,7 @@ func (p *RedisPresence) GetRoomMembers(ctx context.Context, roomID uuid.UUID) ([
 	}
 	players := make([]game.Player, len(members))
 	for i, m := range members {
-		tokens := strings.Split(m, ":")
+		tokens := strings.SplitN(m, ":", 2)
 		if len(tokens) != 2 {
 			return nil, fmt.Errorf("invalid value in store: %s", m)
 		}

@@ -19,8 +19,8 @@ func (h *Handler) handleCreateRoom(client *server.Client, rawMsg json.RawMessage
 	if len(msg.Nickname) < 1 || len(msg.Nickname) > 20 {
 		return SendError(client, ErrorMessage{
 			RefType: CreateRoom,
-			Field: "nickname",
-			Reason: "Nickname should be 1 to 20 charecters long",
+			Field:   "nickname",
+			Reason:  "Nickname should be 1 to 20 charecters long",
 		})
 	}
 
@@ -47,6 +47,7 @@ func (h *Handler) handleCreateRoom(client *server.Client, rawMsg json.RawMessage
 		BaseOutMessage: BaseOutMessage{Type: CreatedRoom},
 		RoomID:         newRoom.ID,
 		PlayerID:       newRoom.OwnerID,
+		Nickname:       msg.Nickname,
 	})
 	return nil
 }

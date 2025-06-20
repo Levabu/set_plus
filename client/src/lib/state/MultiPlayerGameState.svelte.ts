@@ -4,14 +4,14 @@ import { CONNECTION_STATUS, WS } from "$lib/ws/ws.svelte";
 import { GameState } from "./GameState.svelte";
 
 export class MultiPlayerGameState extends GameState {
-  playerID: string = $state<string>("");
-  players: Record<string, Player> = $state<Record<string, Player>>({});
-  hasGameStarted: boolean = $state<boolean>(false);
+  playerID: string = $state("");
+  players: Record<string, Player> = $state({});
+  hasGameStarted: boolean = $state(false);
   score = $derived((() => {
     const player = this.players[this.playerID];
     return player ? player.score : 0;
   })())
-  isOver: boolean = $state<boolean>(false);
+  isOver: boolean = $state(false);
 
   constructor(gameVersion: GameVersion) {
     console.log("MultiPlayerGameState constructor called with gameVersion:", gameVersion);

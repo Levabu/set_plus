@@ -22,14 +22,13 @@ func (h *Handler) handleJoinRoom(client *server.Client, rawMsg json.RawMessage) 
 			Reason: "Nickname should be 1 to 20 charecters long",
 		})
 	}
+	client.Nickname = msg.Nickname
 
 	joinedRoom, err := h.Cfg.Store.GetRoom(context.Background(), msg.RoomID)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-
-	log.Println(joinedRoom)
 
 	if joinedRoom.Started {
 		return SendError(client, ErrorMessage{

@@ -1,5 +1,6 @@
 import { GameVersions, ROTATIONS, type GameVersion, type GameVersionKey } from "$lib/engine/types";
 import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
+import { LS_NICKNAME_KEY } from "$lib/utils/nicknames";
 import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage, type ErrorMessage } from "./messages";
 
 export const CONNECTION_STATUS = {
@@ -108,6 +109,7 @@ export class WS {
     this.roomID = message.roomID;
     this.playerID = message.playerID;
     this.isRoomOwner = true
+    localStorage.setItem(LS_NICKNAME_KEY, message.nickname)
   }
 
   handleJoinedRoomMessage(message: JoinedRoomMessage): void {
@@ -115,10 +117,7 @@ export class WS {
     if (this.playerID) return
     this.roomID = message.roomID;
     this.playerID = message.playerID;
-
-    if (message.error) {
-      console.error("Error joining room:", message.error);
-    }
+    localStorage.setItem(LS_NICKNAME_KEY, message.nickname)
   }
 
   handleStartedGameMessage(message: StartedGameMessage): void {

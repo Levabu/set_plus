@@ -35,10 +35,22 @@ func (h *Handler) BroadcastToRoom(ctx context.Context, roomID uuid.UUID, payload
 func (h *Handler) HandleRoomEvent(id uuid.UUID, event room.Event) {
 	switch event.Type {
 	case room.JoinedPlayer:
+		players, err := h.Cfg.Presence.GetRoomMembers(context.Background(), id)
+		if err != nil {
+			return
+		}
+		var nickname string
+		for _, player := range players {
+			if player.ID == event.CliendID {
+				nickname = player.Nickname
+				break
+			}
+		}
 		h.BroadcastToRoom(context.Background(), id, JoinedRoomMessage{
 			BaseOutMessage: BaseOutMessage{Type: JoinedRoom},
 			RoomID:         id,
 			PlayerID:       event.CliendID,
+			Nickname:       nickname,
 		})
 	case room.StartedGame:
 		log.Println("handling event: started game")

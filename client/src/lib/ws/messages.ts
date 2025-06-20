@@ -67,13 +67,14 @@ export interface CreatedRoomMessage {
   readonly type: typeof IN_MESSAGES.CREATED_ROOM;
   roomID: string;
   playerID: string;
+  nickname: string;
 }
 
 export interface JoinedRoomMessage {
   readonly type: typeof IN_MESSAGES.JOINED_ROOM;
   roomID: string;
   playerID: string;
-  error: string | null;
+  nickname: string;
 }
 
 export interface CheckSetResultMessage {
