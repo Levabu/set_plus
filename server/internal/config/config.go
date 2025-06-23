@@ -1,7 +1,7 @@
 package config
 
 import (
-	"server/internal/server"
+	"server/internal/domain"
 	"server/internal/presence"
 	"server/internal/store"
 )
@@ -20,6 +20,6 @@ func (e Environment) IsDev() bool {
 type Config struct {
 	Environment  Environment
 	Store        *store.Store
-	Presence     *presence.RedisPresence
-	LocalClients *server.LocalClients
+	Presence     presence.Presence
+	LocalClients domain.ClientManager
 }

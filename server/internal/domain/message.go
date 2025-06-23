@@ -1,10 +1,8 @@
-package messages
+package domain
 
 import (
 	"encoding/json"
-	"server/internal/config"
 	"server/internal/game"
-	"server/internal/server"
 
 	"github.com/google/uuid"
 )
@@ -24,7 +22,7 @@ const (
 type StartGameMessage struct {
 	InMessage
 	GameVersion game.GameVersion `json:"gameVersion"`
-	RoomID      uuid.UUID
+	RoomID      uuid.UUID        `json:"roomID"`
 }
 
 type CreateRoomMessage struct {
@@ -34,8 +32,8 @@ type CreateRoomMessage struct {
 
 type JoinRoomMessage struct {
 	InMessage
-	RoomID   uuid.UUID
-	Nickname string `json:"nickname"`
+	RoomID   uuid.UUID `json:"roomID"`
+	Nickname string    `json:"nickname"`
 }
 
 type CheckSetMessage struct {
@@ -45,33 +43,6 @@ type CheckSetMessage struct {
 	RoomID   uuid.UUID   `json:"roomID"`
 	GameID   uuid.UUID   `json:"gameID"`
 }
-
-type Handler struct {
-	ID       uuid.UUID
-	Cfg      *config.Config
-	Handlers map[InMessageType]InMessageHandler
-}
-
-func NewHandler(cfg *config.Config) *Handler {
-	return &Handler{
-		ID:       uuid.New(),
-		Cfg:      cfg,
-		Handlers: make(map[InMessageType]InMessageHandler),
-	}
-}
-
-type InMessageHandler func(client *server.Client, rawMsg json.RawMessage) error
-
-func (h *Handler) RegisterHandlers() {
-	h.Handlers = map[InMessageType]InMessageHandler{
-		CreateRoom: h.handleCreateRoom,
-		JoinRoom:   h.handleJoinRoom,
-		StartGame:  h.handleStartGame,
-		CheckSet:   h.handleCheckSet,
-	}
-}
-
-// Out
 
 type OutMessageType string
 type BaseOutMessage struct {
@@ -129,9 +100,10 @@ type GameOverMessage struct {
 	Players map[uuid.UUID]game.Player `json:"players"`
 }
 
-// Error
 type ErrorMessage struct {
 	RefType InMessageType `json:"refType"`
 	Field   string        `json:"field"`
 	Reason  string        `json:"reason"`
 }
+
+type MessageHandler func(client *Client, rawMsg json.RawMessage) error

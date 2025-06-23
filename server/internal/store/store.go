@@ -65,12 +65,12 @@ func (s *Store) GetGameState(ctx context.Context, id uuid.UUID) (*game.Game, err
 	return &game, nil
 }
 
-func (s *Store) PublishRoomUpdate(ctx context.Context, id uuid.UUID, event room.Event) error {
+func (s *Store) PublishRoomUpdate(ctx context.Context, roomID uuid.UUID, event room.Event) error {
 	envelope := struct {
 		ClientID string     `json:"clientID"`
 		Payload  room.Event `json:"payload"`
 	}{
-		ClientID: id.String(),
+		ClientID: event.CliendID.String(),
 		Payload:  event,
 	}
 	data, err := json.Marshal(envelope)
@@ -78,6 +78,6 @@ func (s *Store) PublishRoomUpdate(ctx context.Context, id uuid.UUID, event room.
 		return err
 	}
 
-	channel := fmt.Sprintf("room:%s:channel", id)
+	channel := fmt.Sprintf("room:%s:channel", roomID)
 	return s.client.Publish(ctx, channel, data).Err()
 }

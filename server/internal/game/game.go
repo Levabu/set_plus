@@ -217,6 +217,16 @@ func (g *Game) DealCards(n int) {
 	}
 }
 
+func (g *Game) GetVisibleCards() []Card {
+	visibleCards := make([]Card, 0)
+	for _, card := range g.Deck {
+		if card.IsVisible && !card.IsDiscarded {
+			visibleCards = append(visibleCards, card)
+		}
+	}
+	return visibleCards
+}
+
 func (g *Game) DealCardsUntilSetAvailable(dealNumber int, maxAttempts int) {
 	attempts := 0
 	for {
