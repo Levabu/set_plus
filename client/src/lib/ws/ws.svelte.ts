@@ -1,7 +1,7 @@
 import { GameVersions, ROTATIONS, type GameVersion, type GameVersionKey } from "$lib/engine/types";
 import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
 import { LS_NICKNAME_KEY } from "$lib/utils/nicknames";
-import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage, type ErrorMessage } from "./messages";
+import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage, type ErrorMessage, type RoomMember } from "./messages";
 
 export const CONNECTION_STATUS = {
   CONNECTED: 'connected',
@@ -21,6 +21,7 @@ export class WS {
     nickname: "",
     roomLink: ""
   })
+  roomMembers: RoomMember[] = $state([])
 
   constructor(url: string = "ws://localhost:8080") {
     let ws = new WebSocket(url)
@@ -110,10 +111,20 @@ export class WS {
     this.playerID = message.playerID;
     this.isRoomOwner = true
     localStorage.setItem(LS_NICKNAME_KEY, message.nickname)
+    this.roomMembers.push({
+      id: message.playerID,
+      nickname: message.nickname,
+      isConnected: true,
+    })
   }
 
   handleJoinedRoomMessage(message: JoinedRoomMessage): void {
     console.log("Joined room:", message.roomID, "as player:", message.playerID);
+    this.roomMembers.push({
+      id: message.playerID,
+      nickname: message.nickname,
+      isConnected: true,
+    })
     if (this.playerID) return
     this.roomID = message.roomID;
     this.playerID = message.playerID;

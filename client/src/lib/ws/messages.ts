@@ -53,7 +53,8 @@ export const IN_MESSAGES = {
   ERROR: 'ERROR'
 } as const;
 
-export type Player = { id: string; nickname: string; score: number }
+export type RoomMember = { id: string; nickname: string; isConnected: boolean }
+export type Player = RoomMember & { score: number }
 
 export interface StartedGameMessage {
   readonly type: typeof IN_MESSAGES.STARTED_GAME;

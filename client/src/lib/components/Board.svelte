@@ -9,6 +9,7 @@
 	import FormInput from "./lib/FormInput.svelte";
 	import { generateNickname, LS_NICKNAME_KEY } from "$lib/utils/nicknames";
 	import { browser } from "$app/environment";
+	import WaitingList from "./WaitingList.svelte";
 
   let ws = $state<WS | null>(new WS("ws://localhost:8080/ws"))
   let gameState = $derived<MultiPlayerGameState | null>(ws?.game || null);
@@ -151,6 +152,10 @@
 			showClipboard={true}
 		/>
     {/if}
+
+		{#if (ws?.roomMembers.length)}
+			<WaitingList playerID={ws.playerID} roomMembers={ws.roomMembers} />
+		{/if}
 
 		<div class="footer">
 				<button onclick={onClickModalButton} class="button" disabled={isButtonDisabled}>
