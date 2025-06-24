@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
+
+
 func (h *RoomEventHandler) handleJoinedPlayer(roomID uuid.UUID, event domain.Event) error {
 	// Get the nickname of the player who joined
 	joinedClient := h.config.LocalClients.Get(event.CliendID)
@@ -153,3 +155,5 @@ func (h *RoomEventHandler) handleGameOver(roomID uuid.UUID, event domain.Event) 
 	}
 	return nil
 }
+
+

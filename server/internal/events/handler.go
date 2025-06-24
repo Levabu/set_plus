@@ -3,10 +3,21 @@ package events
 import (
 	"encoding/json"
 	"log"
+	"server/internal/config"
 	"server/internal/domain"
 
 	"github.com/google/uuid"
 )
+
+type RoomEventHandler struct {
+	config *config.Config
+}
+
+func NewRoomEventHandler(config *config.Config) *RoomEventHandler {
+	return &RoomEventHandler{
+		config: config,
+	}
+}
 
 // This is called from Redis PubSub subscription
 func (h *RoomEventHandler) HandleRoomEventMessage(roomID uuid.UUID, clientID uuid.UUID, msgData []byte) {
