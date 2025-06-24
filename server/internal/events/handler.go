@@ -45,3 +45,4 @@ func (h *RoomEventHandler) HandleRoomEvent(roomID uuid.UUID, event domain.Event)
 	}
 	return nil
 }
+

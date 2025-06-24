@@ -2,6 +2,7 @@ package presence
 
 import (
 	"context"
+	"server/internal/domain"
 
 	"github.com/google/uuid"
 )
@@ -16,6 +17,7 @@ type Presence interface {
 	CleanupDisconnectedClients(ctx context.Context) error
 	IsClientConnected(ctx context.Context, clientID uuid.UUID) (bool, error)
 	UpdateHeartbeat(ctx context.Context, clientID uuid.UUID) error
+	BroadcastToRoom(ctx context.Context, roomID uuid.UUID, message interface{}, localClients domain.ClientManager) error
 }
 
 type ClientStatus struct {

@@ -73,19 +73,8 @@ func (h *RoomEventHandler) handleStartedGame(roomID uuid.UUID, event domain.Even
 		Players:        *gameState.Players,
 	}
 
-	// Get all room members and broadcast
-	members, err := h.config.Presence.GetRoomMembers(context.Background(), roomID)
-	if err != nil {
-		return err
-	}
-
-	for _, memberID := range members {
-		memberClient := h.config.LocalClients.Get(memberID)
-		if memberClient != nil {
-			memberClient.Conn.WriteJSON(startedMessage)
-		}
-	}
-	return nil
+	// Use the new BroadcastToRoom method
+	return h.config.Presence.BroadcastToRoom(context.Background(), roomID, startedMessage, h.config.LocalClients)
 }
 
 func (h *RoomEventHandler) handleChangedGameState(roomID uuid.UUID, event domain.Event) error {
@@ -107,19 +96,8 @@ func (h *RoomEventHandler) handleChangedGameState(roomID uuid.UUID, event domain
 		Players:        *gameState.Players,
 	}
 
-	// Get all room members and broadcast
-	members, err := h.config.Presence.GetRoomMembers(context.Background(), roomID)
-	if err != nil {
-		return err
-	}
-
-	for _, memberID := range members {
-		memberClient := h.config.LocalClients.Get(memberID)
-		if memberClient != nil {
-			memberClient.Conn.WriteJSON(changedMessage)
-		}
-	}
-	return nil
+	// Use the new BroadcastToRoom method
+	return h.config.Presence.BroadcastToRoom(context.Background(), roomID, changedMessage, h.config.LocalClients)
 }
 
 func (h *RoomEventHandler) handleGameOver(roomID uuid.UUID, event domain.Event) error {
@@ -141,19 +119,8 @@ func (h *RoomEventHandler) handleGameOver(roomID uuid.UUID, event domain.Event) 
 		Players:        *gameState.Players,
 	}
 
-	// Get all room members and broadcast
-	members, err := h.config.Presence.GetRoomMembers(context.Background(), roomID)
-	if err != nil {
-		return err
-	}
-
-	for _, memberID := range members {
-		memberClient := h.config.LocalClients.Get(memberID)
-		if memberClient != nil {
-			memberClient.Conn.WriteJSON(gameOverMessage)
-		}
-	}
-	return nil
+	// Use the new BroadcastToRoom method
+	return h.config.Presence.BroadcastToRoom(context.Background(), roomID, gameOverMessage, h.config.LocalClients)
 }
 
 

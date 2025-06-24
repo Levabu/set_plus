@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"server/internal/domain"
 	"time"
 
 	"github.com/google/uuid"
@@ -208,4 +209,19 @@ func (p *RedisPresence) UpdateHeartbeat(ctx context.Context, clientID uuid.UUID)
 	
 	status.LastSeen = time.Now().Unix()
 	return p.SetClientStatus(ctx, clientID, status)
+}
+
+func (p *RedisPresence) BroadcastToRoom(ctx context.Context, roomID uuid.UUID, message interface{}, localClients domain.ClientManager) error {
+	members, err := p.GetRoomMembers(ctx, roomID)
+	if err != nil {
+		return err
+	}
+
+	for _, memberID := range members {
+		memberClient := localClients.Get(memberID)
+		if memberClient != nil {
+			memberClient.Conn.WriteJSON(message)
+		}
+	}
+	return nil
 }
