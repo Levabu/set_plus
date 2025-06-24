@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"server/internal/domain"
 	"server/internal/game"
-	"server/internal/room"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -22,7 +21,7 @@ func New(client *redis.Client) *Store {
 	}
 }
 
-func (s *Store) SetRoom(ctx context.Context, room *room.Room) error {
+func (s *Store) SetRoom(ctx context.Context, room *domain.Room) error {
 	key := fmt.Sprintf("room:%s", room.ID)
 	data, err := json.Marshal(room)
 	if err != nil {
@@ -31,13 +30,13 @@ func (s *Store) SetRoom(ctx context.Context, room *room.Room) error {
 	return s.client.Set(ctx, key, data, 0).Err()
 }
 
-func (s *Store) GetRoom(ctx context.Context, id uuid.UUID) (*room.Room, error) {
+func (s *Store) GetRoom(ctx context.Context, id uuid.UUID) (*domain.Room, error) {
 	key := fmt.Sprintf("room:%s", id)
 	data, err := s.client.Get(ctx, key).Result()
 	if err != nil {
 		return nil, err
 	}
-	var room room.Room
+	var room domain.Room
 	if err := json.Unmarshal([]byte(data), &room); err != nil {
 		return nil, err
 	}

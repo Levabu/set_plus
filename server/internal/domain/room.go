@@ -1,11 +1,6 @@
-package room
+package domain
 
 import (
-	// "context"
-	// "encoding/json"
-	// "log"
-	// "server/internal/messages"
-
 	"github.com/google/uuid"
 )
 

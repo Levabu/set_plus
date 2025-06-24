@@ -8,7 +8,6 @@ import (
 	"server/internal/config"
 	"server/internal/domain"
 	"server/internal/events"
-	"server/internal/room"
 
 	"github.com/google/uuid"
 )
@@ -40,7 +39,7 @@ func (h *RoomHandler) HandleCreateRoom(client *domain.Client, rawMsg json.RawMes
 	}
 	client.Nickname = msg.Nickname
 
-	newRoom := room.Room{
+	newRoom := domain.Room{
 		ID:      uuid.New(),
 		OwnerID: client.ID,
 		Started: false,
