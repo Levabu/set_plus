@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"server/internal/domain"
 	"server/internal/game"
 	"server/internal/room"
 
@@ -65,10 +66,10 @@ func (s *Store) GetGameState(ctx context.Context, id uuid.UUID) (*game.Game, err
 	return &game, nil
 }
 
-func (s *Store) PublishRoomUpdate(ctx context.Context, roomID uuid.UUID, event room.Event) error {
+func (s *Store) PublishRoomUpdate(ctx context.Context, roomID uuid.UUID, event domain.Event) error {
 	envelope := struct {
 		ClientID string     `json:"clientID"`
-		Payload  room.Event `json:"payload"`
+		Payload  domain.Event `json:"payload"`
 	}{
 		ClientID: event.CliendID.String(),
 		Payload:  event,

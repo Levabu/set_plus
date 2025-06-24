@@ -7,7 +7,6 @@ import (
 	"server/internal/config"
 	"server/internal/domain"
 	"server/internal/game"
-	"server/internal/room"
 
 	"github.com/google/uuid"
 )
@@ -67,8 +66,8 @@ func (h *GameHandler) HandleStartGame(client *domain.Client, rawMsg json.RawMess
 	}
 
 	// Publish room event - this will be handled by the room event subscription
-	err = h.config.Store.PublishRoomUpdate(context.Background(), r.ID, room.Event{
-		Type:     room.StartedGame,
+	err = h.config.Store.PublishRoomUpdate(context.Background(), r.ID, domain.Event{
+		Type:     domain.GameStartedEvent,
 		CliendID: client.ID,
 	})
 	if err != nil {
@@ -153,14 +152,14 @@ func (h *GameHandler) HandleCheckSet(client *domain.Client, rawMsg json.RawMessa
 		return err
 	}
 
-	var eventType room.EventType
+	var eventType domain.EventType
 	if gameOver {
-		eventType = room.GameOver
+		eventType = domain.GameOverEvent
 	} else {
-		eventType = room.ChangedGameState
+		eventType = domain.GameStateChangedEvent
 	}
 
-	h.config.Store.PublishRoomUpdate(context.Background(), r.ID, room.Event{
+	h.config.Store.PublishRoomUpdate(context.Background(), r.ID, domain.Event{
 		Type:     eventType,
 		CliendID: client.ID,
 	})

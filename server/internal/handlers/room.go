@@ -134,8 +134,8 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.Client, rawMsg json.RawMessa
 	log.Printf("Player %s (%s) joined room %s", client.ID, client.Nickname, joinedRoom.ID)
 
 	// Publish room event to notify other members
-	err = h.config.Store.PublishRoomUpdate(context.Background(), joinedRoom.ID, room.Event{
-		Type:     room.JoinedPlayer,
+	err = h.config.Store.PublishRoomUpdate(context.Background(), joinedRoom.ID, domain.Event{
+		Type:     domain.PlayerJoinedEvent,
 		CliendID: client.ID,
 	})
 	if err != nil {
