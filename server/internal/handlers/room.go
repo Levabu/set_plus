@@ -24,7 +24,7 @@ func NewRoomHandler(cfg *config.Config) *RoomHandler {
 	}
 }
 
-func (h *RoomHandler) HandleCreateRoom(client *domain.Client, rawMsg json.RawMessage) error {
+func (h *RoomHandler) HandleCreateRoom(client *domain.LocalClient, rawMsg json.RawMessage) error {
 	var msg domain.CreateRoomMessage
 	if err := json.Unmarshal(rawMsg, &msg); err != nil {
 		return fmt.Errorf("invalid message: %s", err.Error())
@@ -68,7 +68,7 @@ func (h *RoomHandler) HandleCreateRoom(client *domain.Client, rawMsg json.RawMes
 	return nil
 }
 
-func (h *RoomHandler) HandleJoinRoom(client *domain.Client, rawMsg json.RawMessage) error {
+func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.RawMessage) error {
 	var msg domain.JoinRoomMessage
 	if err := json.Unmarshal(rawMsg, &msg); err != nil {
 		return fmt.Errorf("invalid message: %s", err.Error())

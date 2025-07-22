@@ -19,7 +19,7 @@ func NewGameHandler(cfg *config.Config) *GameHandler {
 	return &GameHandler{config: cfg}
 }
 
-func (h *GameHandler) HandleStartGame(client *domain.Client, rawMsg json.RawMessage) error {
+func (h *GameHandler) HandleStartGame(client *domain.LocalClient, rawMsg json.RawMessage) error {
 	var msg domain.StartGameMessage
 	if err := json.Unmarshal(rawMsg, &msg); err != nil {
 		return fmt.Errorf("invalid message: %s", err.Error())
@@ -76,7 +76,7 @@ func (h *GameHandler) HandleStartGame(client *domain.Client, rawMsg json.RawMess
 	return nil
 }
 
-func (h *GameHandler) HandleCheckSet(client *domain.Client, rawMsg json.RawMessage) error {
+func (h *GameHandler) HandleCheckSet(client *domain.LocalClient, rawMsg json.RawMessage) error {
 	var msg domain.CheckSetMessage
 	if err := json.Unmarshal(rawMsg, &msg); err != nil {
 		return fmt.Errorf("invalid message: %s", err.Error())

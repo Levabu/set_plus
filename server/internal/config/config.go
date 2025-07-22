@@ -21,5 +21,5 @@ type Config struct {
 	Environment  Environment
 	Store        *store.Store
 	Presence     presence.Presence
-	LocalClients domain.ClientManager
+	LocalClients domain.LocalClientManager
 }

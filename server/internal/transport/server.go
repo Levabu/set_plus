@@ -35,7 +35,7 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &domain.Client{
+	client := &domain.LocalClient{
 		ID:   uuid.New(),
 		Conn: conn,
 	}

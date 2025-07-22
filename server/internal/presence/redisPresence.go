@@ -36,9 +36,9 @@ func clientRoomKey(clientID uuid.UUID) string {
 	return fmt.Sprintf("client:%s:room", clientID.String())
 }
 
-func (p *RedisPresence) GetClientStatus(ctx context.Context, clientID uuid.UUID) (ClientStatus, error) {
-	var status ClientStatus
-	
+func (p *RedisPresence) GetClientStatus(ctx context.Context, clientID uuid.UUID) (PresenceClient, error) {
+	var status PresenceClient
+
 	data, err := p.client.Get(ctx, clientStatusKey(clientID)).Result()
 	if err != nil {
 		if err == redis.Nil {
@@ -46,12 +46,12 @@ func (p *RedisPresence) GetClientStatus(ctx context.Context, clientID uuid.UUID)
 		}
 		return status, err
 	}
-	
+
 	err = json.Unmarshal([]byte(data), &status)
 	return status, err
 }
 
-func (p *RedisPresence) SetClientStatus(ctx context.Context, clientID uuid.UUID, status ClientStatus) error {
+func (p *RedisPresence) SetClientStatus(ctx context.Context, clientID uuid.UUID, status PresenceClient) error {
 	status.LastSeen = time.Now().Unix()
 	statusData, err := json.Marshal(status)
 	if err != nil {
@@ -71,18 +71,18 @@ func (p *RedisPresence) IsClientConnected(ctx context.Context, clientID uuid.UUI
 	if err != nil {
 		return false, nil // If status not found, consider disconnected
 	}
-	
+
 	now := time.Now().Unix()
-	if now - status.LastSeen > 300 { // 5 minutes
+	if now-status.LastSeen > 300 { // 5 minutes
 		return false, nil
 	}
-	
+
 	return status.Connected, nil
 }
 
 func (p *RedisPresence) JoinRoom(ctx context.Context, roomID uuid.UUID, clientID uuid.UUID) error {
 	// store client status
-	if err := p.SetClientStatus(ctx, clientID, ClientStatus{
+	if err := p.SetClientStatus(ctx, clientID, PresenceClient{
 		ID:        clientID,
 		RoomID:    roomID,
 		Connected: true,
@@ -103,7 +103,7 @@ func (p *RedisPresence) JoinRoom(ctx context.Context, roomID uuid.UUID, clientID
 
 func (p *RedisPresence) LeaveRoom(ctx context.Context, roomID uuid.UUID, clientID uuid.UUID) error {
 	// update status
-	if err := p.SetClientStatus(ctx, clientID, ClientStatus{
+	if err := p.SetClientStatus(ctx, clientID, PresenceClient{
 		ID:        clientID,
 		Connected: false,
 		LastSeen:  time.Now().Unix(),
@@ -171,33 +171,33 @@ func (p *RedisPresence) CleanupDisconnectedClients(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	
+
 	for _, key := range keys {
 		data, err := p.client.Get(ctx, key).Result()
 		if err != nil {
 			continue
 		}
-		
-		var status ClientStatus
+
+		var status PresenceClient
 		if err := json.Unmarshal([]byte(data), &status); err != nil {
 			continue
 		}
-		
+
 		// If client hasn't been seen for more than 1 hour, clean up
-		if time.Now().Unix() - status.LastSeen > 3600 {
+		if time.Now().Unix()-status.LastSeen > 3600 {
 			clientID := status.ID
-			
+
 			// Remove from any rooms
 			if status.RoomID != uuid.Nil {
 				p.LeaveRoom(ctx, status.RoomID, clientID)
 			}
-			
+
 			// Remove client status and room mapping
 			p.client.Del(ctx, key)
 			p.client.Del(ctx, clientRoomKey(clientID))
 		}
 	}
-	
+
 	return nil
 }
 
@@ -206,12 +206,12 @@ func (p *RedisPresence) UpdateHeartbeat(ctx context.Context, clientID uuid.UUID)
 	if err != nil {
 		return err
 	}
-	
+
 	status.LastSeen = time.Now().Unix()
 	return p.SetClientStatus(ctx, clientID, status)
 }
 
-func (p *RedisPresence) BroadcastToRoom(ctx context.Context, roomID uuid.UUID, message interface{}, localClients domain.ClientManager) error {
+func (p *RedisPresence) BroadcastToRoom(ctx context.Context, roomID uuid.UUID, message interface{}, localClients domain.LocalClientManager) error {
 	members, err := p.GetRoomMembers(ctx, roomID)
 	if err != nil {
 		return err

@@ -106,4 +106,4 @@ type ErrorMessage struct {
 	Reason  string        `json:"reason"`
 }
 
-type MessageHandler func(client *Client, rawMsg json.RawMessage) error
+type MessageHandler func(client *LocalClient, rawMsg json.RawMessage) error

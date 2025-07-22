@@ -37,7 +37,7 @@ func (r *Router) RegisterHandler(msgType domain.InMessageType, handler domain.Me
 	r.handlers[msgType] = handler
 }
 
-func (r *Router) HandleMessage(client *domain.Client, msgType domain.InMessageType, rawMsg json.RawMessage) error {
+func (r *Router) HandleMessage(client *domain.LocalClient, msgType domain.InMessageType, rawMsg json.RawMessage) error {
 	handler, ok := r.handlers[msgType]
 	if !ok {
 		return fmt.Errorf("unknown message type: %s", msgType)

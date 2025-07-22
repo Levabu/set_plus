@@ -9,18 +9,18 @@ import (
 )
 
 type ConnectionManager struct {
-	clients domain.ClientManager
+	clients domain.LocalClientManager
 	router  domain.MessageRouter
 }
 
-func NewConnectionManager(clients domain.ClientManager, router domain.MessageRouter) *ConnectionManager {
+func NewConnectionManager(clients domain.LocalClientManager, router domain.MessageRouter) *ConnectionManager {
 	return &ConnectionManager{
 		clients: clients,
 		router:  router,
 	}
 }
 
-func (cm *ConnectionManager) HandleConnection(client *domain.Client) {
+func (cm *ConnectionManager) HandleConnection(client *domain.LocalClient) {
 	defer client.Conn.Close()
 
 	cm.clients.Add(client)
