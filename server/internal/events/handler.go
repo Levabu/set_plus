@@ -1,6 +1,7 @@
 package events
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"server/internal/config"
@@ -46,3 +47,17 @@ func (h *RoomEventHandler) HandleRoomEvent(roomID uuid.UUID, event domain.Event)
 	return nil
 }
 
+func (h *RoomEventHandler) BroadcastToRoom(ctx context.Context, roomID uuid.UUID, message interface{}, localClients domain.LocalClientManager) error {
+	members, err := h.config.Presence.GetRoomMembers(ctx, roomID)
+	if err != nil {
+		return err
+	}
+
+	for _, memberID := range members {
+		memberClient := localClients.Get(memberID)
+		if memberClient != nil {
+			memberClient.Conn.WriteJSON(message)
+		}
+	}
+	return nil
+}

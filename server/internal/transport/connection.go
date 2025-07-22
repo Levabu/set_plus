@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"server/internal/domain"
-
-	"github.com/google/uuid"
 )
 
 type ConnectionManager struct {
@@ -45,22 +43,3 @@ func (cm *ConnectionManager) HandleConnection(client *domain.LocalClient) {
 	}
 }
 
-func (cm *ConnectionManager) BroadcastToRoom(roomID uuid.UUID, message interface{}) error {
-	allClients := cm.clients.GetAll()
-	for _, client := range allClients {
-		if client.RoomID == roomID {
-			if err := client.Conn.WriteJSON(message); err != nil {
-				log.Printf("Error broadcasting to client %s: %v", client.ID, err)
-			}
-		}
-	}
-	return nil
-}
-
-func (cm *ConnectionManager) SendToClient(clientID uuid.UUID, message interface{}) error {
-	client := cm.clients.Get(clientID)
-	if client == nil {
-		return nil
-	}
-	return client.Conn.WriteJSON(message)
-}

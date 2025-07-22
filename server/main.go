@@ -20,18 +20,18 @@ func main() {
 		DB:       0,
 	})
 	redisStore := store.New(redisClient)
-	presenceService := presence.NewRedisPresence(redisClient)
-	clientManager := domain.NewLocalClients()
+	redisPresence := presence.NewRedisPresence(redisClient)
+	localClients := domain.NewLocalClients()
 
 	cfg := &config.Config{
 		Environment:  config.Dev,
 		Store:        redisStore,
-		Presence:     presenceService,
-		LocalClients: clientManager,
+		Presence:     redisPresence,
+		LocalClients: localClients,
 	}
 
 	router := handlers.NewRouter(cfg)
-	connectionManager := transport.NewConnectionManager(clientManager, router)
+	connectionManager := transport.NewConnectionManager(localClients, router)
 	server := transport.NewServer(cfg, connectionManager)
 
 	http.HandleFunc("/ws", server.HandleWebSocket)

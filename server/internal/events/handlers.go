@@ -74,7 +74,7 @@ func (h *RoomEventHandler) handleStartedGame(roomID uuid.UUID, event domain.Even
 	}
 
 	// Use the new BroadcastToRoom method
-	return h.config.Presence.BroadcastToRoom(context.Background(), roomID, startedMessage, h.config.LocalClients)
+	return h.BroadcastToRoom(context.Background(), roomID, startedMessage, h.config.LocalClients)
 }
 
 func (h *RoomEventHandler) handleChangedGameState(roomID uuid.UUID, event domain.Event) error {
@@ -97,7 +97,7 @@ func (h *RoomEventHandler) handleChangedGameState(roomID uuid.UUID, event domain
 	}
 
 	// Use the new BroadcastToRoom method
-	return h.config.Presence.BroadcastToRoom(context.Background(), roomID, changedMessage, h.config.LocalClients)
+	return h.BroadcastToRoom(context.Background(), roomID, changedMessage, h.config.LocalClients)
 }
 
 func (h *RoomEventHandler) handleGameOver(roomID uuid.UUID, event domain.Event) error {
@@ -119,8 +119,7 @@ func (h *RoomEventHandler) handleGameOver(roomID uuid.UUID, event domain.Event) 
 		Players:        *gameState.Players,
 	}
 
-	// Use the new BroadcastToRoom method
-	return h.config.Presence.BroadcastToRoom(context.Background(), roomID, gameOverMessage, h.config.LocalClients)
+	return h.BroadcastToRoom(context.Background(), roomID, gameOverMessage, h.config.LocalClients)
 }
 
 
