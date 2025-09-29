@@ -19,7 +19,7 @@ func (e Environment) IsDev() bool {
 
 type Config struct {
 	Environment  Environment
-	Store        *store.Store
+	Store        store.Store
 	Presence     presence.Presence
 	LocalClients domain.LocalClientManager
 }

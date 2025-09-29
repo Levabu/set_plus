@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"server/internal/config"
 	"server/internal/domain"
+	"server/internal/events"
 	"server/internal/handlers"
 	"server/internal/presence"
 	"server/internal/store"
@@ -19,16 +20,23 @@ func main() {
 		Password: "",
 		DB:       0,
 	})
-	redisStore := store.New(redisClient)
+	// redisStore := store.NewRedisStore(redisClient)
 	redisPresence := presence.NewRedisPresence(redisClient)
+
+	memoryStore := store.NewMemoryStore()
+
 	localClients := domain.NewLocalClients()
 
 	cfg := &config.Config{
 		Environment:  config.Dev,
-		Store:        redisStore,
+		// Store:        redisStore,
+		Store:        memoryStore,
 		Presence:     redisPresence,
 		LocalClients: localClients,
 	}
+
+	eventHandler := events.NewRoomEventHandler(cfg)
+	memoryStore.SetEventCallback(eventHandler.HandleRoomEvent)
 
 	router := handlers.NewRouter(cfg)
 	connectionManager := transport.NewConnectionManager(localClients, router)
