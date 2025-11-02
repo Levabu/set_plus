@@ -6,6 +6,7 @@ type EventType string
 
 const (
 	PlayerJoinedEvent     EventType = "JOINED_PLAYER"
+	PlayerLeftEvent       EventType = "LEFT_PLAYER"
 	GameStartedEvent      EventType = "STARTED_GAME"
 	GameStateChangedEvent EventType = "CHANGED_GAME_STATE"
 	GameOverEvent         EventType = "GAME_OVER"

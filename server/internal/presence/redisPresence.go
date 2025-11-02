@@ -24,10 +24,6 @@ func roomClientsKey(roomID uuid.UUID) string {
 	return fmt.Sprintf("room:%s:clients", roomID.String())
 }
 
-func roomChannel(roomID uuid.UUID) string {
-	return fmt.Sprintf("room:%s:channel", roomID.String())
-}
-
 func clientKey(clientID uuid.UUID) string {
 	// map client id to client data
 	return fmt.Sprintf("client:%s:status", clientID.String())
@@ -130,64 +126,38 @@ func (p *RedisPresence) GetRoomMembers(ctx context.Context, roomID uuid.UUID) ([
 	return clientIDs, nil
 }
 
-func (p *RedisPresence) SubscribeToRoom(ctx context.Context, roomID uuid.UUID, handler func(clientID uuid.UUID, msg []byte)) error {
-	sub := p.client.Subscribe(ctx, roomChannel(roomID))
-	ch := sub.Channel()
-
-	go func() {
-		for msg := range ch {
-			var envelope struct {
-				ClientID string          `json:"clientID"`
-				Payload  json.RawMessage `json:"payload"`
-			}
-			if err := json.Unmarshal([]byte(msg.Payload), &envelope); err != nil {
-				log.Println("invalid broadcast message:", err)
-				continue
-			}
-			clientID, err := uuid.Parse(envelope.ClientID)
-			if err != nil {
-				log.Println("invalid client ID in broadcast:", err)
-				continue
-			}
-			handler(clientID, []byte(envelope.Payload))
-		}
-	}()
-
-	return nil
-}
-
 func (p *RedisPresence) CleanupDisconnectedClients(ctx context.Context) error {
-	// This should be called periodically to clean up old client data
-	pattern := "client:*:status"
-	keys, err := p.client.Keys(ctx, pattern).Result()
-	if err != nil {
-		return err
-	}
+	// // This should be called periodically to clean up old client data
+	// pattern := "client:*:status"
+	// keys, err := p.client.Keys(ctx, pattern).Result()
+	// if err != nil {
+	// 	return err
+	// }
 
-	for _, key := range keys {
-		data, err := p.client.Get(ctx, key).Result()
-		if err != nil {
-			continue
-		}
+	// for _, key := range keys {
+	// 	data, err := p.client.Get(ctx, key).Result()
+	// 	if err != nil {
+	// 		continue
+	// 	}
 
-		var status PresenceClient
-		if err := json.Unmarshal([]byte(data), &status); err != nil {
-			continue
-		}
+	// 	var status PresenceClient
+	// 	if err := json.Unmarshal([]byte(data), &status); err != nil {
+	// 		continue
+	// 	}
 
-		// If client hasn't been seen for more than 1 hour, clean up
-		if time.Now().Unix()-status.LastSeen > 3600 {
-			clientID := status.ID
+	// 	// If client hasn't been seen for more than 1 hour, clean up
+	// 	if time.Now().Unix()-status.LastSeen > 3600 {
+	// 		clientID := status.ID
 
-			// Remove from any rooms
-			if status.RoomID != uuid.Nil {
-				p.LeaveRoom(ctx, status.RoomID, clientID)
-			}
+	// 		// Remove from any rooms
+	// 		if status.RoomID != uuid.Nil {
+	// 			p.LeaveRoom(ctx, status.RoomID, clientID)
+	// 		}
 
-			// Remove client status and room mapping
-			p.client.Del(ctx, key)
-		}
-	}
+	// 		// Remove client status and room mapping
+	// 		p.client.Del(ctx, key)
+	// 	}
+	// }
 
 	return nil
 }

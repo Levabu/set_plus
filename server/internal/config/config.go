@@ -1,6 +1,7 @@
 package config
 
 import (
+	"server/internal/broker"
 	"server/internal/domain"
 	"server/internal/presence"
 	"server/internal/store"
@@ -21,5 +22,6 @@ type Config struct {
 	Environment  Environment
 	Store        store.Store
 	Presence     presence.Presence
+	Broker       broker.Broker
 	LocalClients domain.LocalClientManager
 }

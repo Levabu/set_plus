@@ -8,8 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-
-
 func (h *RoomEventHandler) handleJoinedPlayer(roomID uuid.UUID, event domain.Event) error {
 	// Get the nickname of the player who joined
 	joinedClient := h.config.LocalClients.Get(event.CliendID)
@@ -27,10 +25,10 @@ func (h *RoomEventHandler) handleJoinedPlayer(roomID uuid.UUID, event domain.Eve
 		PlayerID:       event.CliendID,
 		Nickname:       nickname,
 	}
-	
+
 	// Get all room members and broadcast to everyone EXCEPT the player who just joined
 	// (they already got their own JoinedRoom message from the handler)
-	members, err := h.config.Presence.GetRoomMembers(context.Background(), roomID)
+	members, err := h.config.Presence.GetActiveRoomMembers(context.Background(), roomID)
 	if err != nil {
 		return err
 	}
@@ -53,13 +51,26 @@ func (h *RoomEventHandler) handleJoinedPlayer(roomID uuid.UUID, event domain.Eve
 	return nil
 }
 
+func (h *RoomEventHandler) handleDisconnectedPlayer(roomID uuid.UUID, event domain.Event) error {
+	h.config.LocalClients.SetClientConnected(event.CliendID, false)
+
+	// set timer for local cleanup
+
+	msg := domain.LeftRoomMessage{
+		BaseOutMessage: domain.BaseOutMessage{Type: domain.LeftRoom},
+		PlayerID: event.CliendID,
+	}
+
+	return h.BroadcastToRoom(context.Background(), roomID, msg, h.config.LocalClients)
+}
+
 func (h *RoomEventHandler) handleStartedGame(roomID uuid.UUID, event domain.Event) error {
 	// Get room and game state
 	gameRoom, err := h.config.Store.GetRoom(context.Background(), roomID)
 	if err != nil {
 		return err
 	}
-	
+
 	gameState, err := h.config.Store.GetGameState(context.Background(), gameRoom.GameID)
 	if err != nil {
 		return err
@@ -73,7 +84,6 @@ func (h *RoomEventHandler) handleStartedGame(roomID uuid.UUID, event domain.Even
 		Players:        *gameState.Players,
 	}
 
-	// Use the new BroadcastToRoom method
 	return h.BroadcastToRoom(context.Background(), roomID, startedMessage, h.config.LocalClients)
 }
 
@@ -83,7 +93,7 @@ func (h *RoomEventHandler) handleChangedGameState(roomID uuid.UUID, event domain
 	if err != nil {
 		return err
 	}
-	
+
 	gameState, err := h.config.Store.GetGameState(context.Background(), gameRoom.GameID)
 	if err != nil {
 		return err
@@ -96,7 +106,6 @@ func (h *RoomEventHandler) handleChangedGameState(roomID uuid.UUID, event domain
 		Players:        *gameState.Players,
 	}
 
-	// Use the new BroadcastToRoom method
 	return h.BroadcastToRoom(context.Background(), roomID, changedMessage, h.config.LocalClients)
 }
 
@@ -106,7 +115,7 @@ func (h *RoomEventHandler) handleGameOver(roomID uuid.UUID, event domain.Event) 
 	if err != nil {
 		return err
 	}
-	
+
 	gameState, err := h.config.Store.GetGameState(context.Background(), gameRoom.GameID)
 	if err != nil {
 		return err
@@ -121,5 +130,3 @@ func (h *RoomEventHandler) handleGameOver(roomID uuid.UUID, event domain.Event) 
 
 	return h.BroadcastToRoom(context.Background(), roomID, gameOverMessage, h.config.LocalClients)
 }
-
-

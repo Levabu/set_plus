@@ -15,5 +15,6 @@ type Store interface {
 	SetGameState(ctx context.Context, game *game.Game) error
 	GetGameState(ctx context.Context, id uuid.UUID) (*game.Game, error)
 
-	PublishRoomUpdate(ctx context.Context, roomID uuid.UUID, event domain.Event) error
+	CleanupAfterGame(ctx context.Context, gameID uuid.UUID)	
+	CleanupStoreRoom(ctx context.Context, roomID uuid.UUID)
 }

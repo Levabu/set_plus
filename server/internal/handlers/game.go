@@ -49,7 +49,7 @@ func (h *GameHandler) HandleStartGame(client *domain.LocalClient, rawMsg json.Ra
 		return err
 	}
 
-	players, err := h.config.Presence.GetRoomMembers(context.Background(), r.ID)
+	players, err := h.config.Presence.GetActiveRoomMembers(context.Background(), r.ID)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (h *GameHandler) HandleStartGame(client *domain.LocalClient, rawMsg json.Ra
 	}
 
 	// Publish room event - this will be handled by the room event subscription
-	err = h.config.Store.PublishRoomUpdate(context.Background(), r.ID, domain.Event{
+	err = h.config.Broker.PublishRoomUpdate(context.Background(), r.ID, domain.Event{
 		Type:     domain.GameStartedEvent,
 		CliendID: client.ID,
 	})
@@ -155,11 +155,12 @@ func (h *GameHandler) HandleCheckSet(client *domain.LocalClient, rawMsg json.Raw
 	var eventType domain.EventType
 	if gameOver {
 		eventType = domain.GameOverEvent
+		h.config.Store.CleanupAfterGame(context.Background(), gameState.GameID)
 	} else {
 		eventType = domain.GameStateChangedEvent
 	}
 
-	h.config.Store.PublishRoomUpdate(context.Background(), r.ID, domain.Event{
+	h.config.Broker.PublishRoomUpdate(context.Background(), r.ID, domain.Event{
 		Type:     eventType,
 		CliendID: client.ID,
 	})

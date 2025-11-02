@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"server/internal/broker"
 	"server/internal/config"
 	"server/internal/domain"
+
 	"server/internal/events"
 	"server/internal/handlers"
 	"server/internal/presence"
@@ -15,15 +18,22 @@ import (
 )
 
 func main() {
-	redisClient := store.Init(redis.Options{
+	redisClient := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "",
 		DB:       0,
 	})
+	if err := redisClient.Ping(context.Background()).Err(); err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+
 	// redisStore := store.NewRedisStore(redisClient)
-	redisPresence := presence.NewRedisPresence(redisClient)
+	// redisPresence := presence.NewRedisPresence(redisClient)
+	// redisBroker := broker.NewRedisBroker(redisClient)
 
 	memoryStore := store.NewMemoryStore()
+	memoryPresence := presence.NewMemoryPresence()
+	memoryBroker := broker.NewMemoryBroker()
 
 	localClients := domain.NewLocalClients()
 
@@ -31,15 +41,18 @@ func main() {
 		Environment:  config.Dev,
 		// Store:        redisStore,
 		Store:        memoryStore,
-		Presence:     redisPresence,
+		// Presence:     redisPresence,
+		Presence:     memoryPresence,
+		// Broker: redisBroker,
+		Broker: memoryBroker,
 		LocalClients: localClients,
 	}
 
 	eventHandler := events.NewRoomEventHandler(cfg)
-	memoryStore.SetEventCallback(eventHandler.HandleRoomEvent)
+	memoryBroker.SetEventCallback(eventHandler.HandleRoomEvent)
 
 	router := handlers.NewRouter(cfg)
-	connectionManager := transport.NewConnectionManager(localClients, router)
+	connectionManager := transport.NewConnectionManager(cfg, localClients, router)
 	server := transport.NewServer(cfg, connectionManager)
 
 	http.HandleFunc("/ws", server.HandleWebSocket)

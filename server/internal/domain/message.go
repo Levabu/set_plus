@@ -52,6 +52,7 @@ type BaseOutMessage struct {
 const (
 	CreatedRoom      OutMessageType = "CREATED_ROOM"
 	JoinedRoom       OutMessageType = "JOINED_ROOM"
+	LeftRoom         OutMessageType = "LEFT_ROOM"
 	StartedGame      OutMessageType = "STARTED_GAME"
 	CheckSetResult   OutMessageType = "CHECK_SET_RESULT"
 	ChangedGameState OutMessageType = "CHANGED_GAME_STATE"
@@ -71,6 +72,11 @@ type JoinedRoomMessage struct {
 	RoomID   uuid.UUID `json:"roomID"`
 	PlayerID uuid.UUID `json:"playerID"`
 	Nickname string    `json:"nickname"`
+}
+
+type LeftRoomMessage struct {
+	BaseOutMessage
+	PlayerID uuid.UUID `json:"playerID"`
 }
 
 type StartedGameMessage struct {

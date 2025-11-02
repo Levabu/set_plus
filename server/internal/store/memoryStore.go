@@ -49,14 +49,14 @@ func (s *MemoryStore) GetGameState(ctx context.Context, id uuid.UUID) (*game.Gam
 	return s.games[id], nil
 }
 
-func (s *MemoryStore) PublishRoomUpdate(ctx context.Context, roomID uuid.UUID, event domain.Event) error {
-	if s.eventCallback == nil {
-		return nil
-	}
-
-	return s.eventCallback(roomID, event)
+func (s *MemoryStore) CleanupAfterGame(ctx context.Context, gameID uuid.UUID) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.games, gameID)
 }
 
-func (s *MemoryStore) SetEventCallback(callback func(roomID uuid.UUID, event domain.Event) error) {
-	s.eventCallback = callback
+func (s *MemoryStore) CleanupStoreRoom(ctx context.Context, roomID uuid.UUID) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.rooms, roomID)
 }

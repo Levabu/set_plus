@@ -54,8 +54,11 @@ func (h *RoomHandler) HandleCreateRoom(client *domain.LocalClient, rawMsg json.R
 		return err
 	}
 
-	// Set up room event subscription for this room
-	go h.config.Presence.SubscribeToRoom(context.Background(), newRoom.ID, func(clientID uuid.UUID, msgData []byte) {
+	go h.config.Broker.SubscribeToRoom(context.Background(), newRoom.ID, func(clientID uuid.UUID, msg any) {
+		msgData, ok := msg.([]byte)
+		if !ok {
+			return
+		}
 		h.eventHandler.HandleRoomEventMessage(newRoom.ID, clientID, msgData)
 	})
 
@@ -85,7 +88,11 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 
 	joinedRoom, err := h.config.Store.GetRoom(context.Background(), msg.RoomID)
 	if err != nil {
-		return err
+		return SendError(client, domain.ErrorMessage{
+			RefType: domain.JoinRoom,
+			Field:   "roomLink",
+			Reason:  "Room doesn't exist",
+		})
 	}
 
 	if joinedRoom.Started {
@@ -110,7 +117,7 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 	})
 
 	// Send existing room members to the newly joined player
-	existingMembers, err := h.config.Presence.GetRoomMembers(context.Background(), joinedRoom.ID)
+	existingMembers, err := h.config.Presence.GetActiveRoomMembers(context.Background(), joinedRoom.ID)
 	if err == nil {
 		for _, memberID := range existingMembers {
 			// Don't send the player their own join message again
@@ -133,7 +140,7 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 	log.Printf("Player %s (%s) joined room %s", client.ID, client.Nickname, joinedRoom.ID)
 
 	// Publish room event to notify other members
-	err = h.config.Store.PublishRoomUpdate(context.Background(), joinedRoom.ID, domain.Event{
+	err = h.config.Broker.PublishRoomUpdate(context.Background(), joinedRoom.ID, domain.Event{
 		Type:     domain.PlayerJoinedEvent,
 		CliendID: client.ID,
 	})

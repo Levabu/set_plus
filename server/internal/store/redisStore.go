@@ -65,19 +65,3 @@ func (s *RedisStore) GetGameState(ctx context.Context, id uuid.UUID) (*game.Game
 	return &game, nil
 }
 
-func (s *RedisStore) PublishRoomUpdate(ctx context.Context, roomID uuid.UUID, event domain.Event) error {
-	envelope := struct {
-		ClientID string       `json:"clientID"`
-		Payload  domain.Event `json:"payload"`
-	}{
-		ClientID: event.CliendID.String(),
-		Payload:  event,
-	}
-	data, err := json.Marshal(envelope)
-	if err != nil {
-		return err
-	}
-
-	channel := fmt.Sprintf("room:%s:channel", roomID)
-	return s.client.Publish(ctx, channel, data).Err()
-}

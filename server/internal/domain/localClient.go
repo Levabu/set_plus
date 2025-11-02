@@ -2,16 +2,19 @@ package domain
 
 import (
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type LocalClient struct {
-	ID       uuid.UUID
-	Conn     *websocket.Conn
-	RoomID   uuid.UUID
-	Nickname string
+	ID        uuid.UUID
+	Conn      *websocket.Conn
+	RoomID    uuid.UUID
+	Nickname  string
+	Connected bool
+	LastSeen  time.Time
 }
 
 type LocalClientManager interface {
@@ -19,6 +22,8 @@ type LocalClientManager interface {
 	Get(id uuid.UUID) *LocalClient
 	Remove(id uuid.UUID)
 	GetAll() map[uuid.UUID]*LocalClient
+	SetClientConnected(id uuid.UUID, connected bool)
+	CleanupLocalRoomClients(roomID uuid.UUID)
 }
 
 type LocalClients struct {
@@ -50,6 +55,15 @@ func (c *LocalClients) Remove(id uuid.UUID) {
 	delete(c.clients, id)
 }
 
+func (c *LocalClients) SetClientConnected(id uuid.UUID, connected bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	client := c.clients[id]
+	client.Connected = connected
+	client.LastSeen = time.Now()
+	c.clients[id] = client
+}
+
 func (c *LocalClients) GetAll() map[uuid.UUID]*LocalClient {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -58,4 +72,14 @@ func (c *LocalClients) GetAll() map[uuid.UUID]*LocalClient {
 		result[id] = client
 	}
 	return result
+}
+
+func (c *LocalClients) CleanupLocalRoomClients(roomID uuid.UUID) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	for id, client := range c.clients {
+		if client.RoomID == roomID {
+			delete(c.clients, id)
+		}
+	}
 }
