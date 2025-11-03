@@ -40,6 +40,8 @@ func NewLocalClients() *LocalClients {
 func (c *LocalClients) Add(client *LocalClient) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	client.Connected = true
+	client.LastSeen = time.Now()
 	c.clients[client.ID] = client
 }
 
@@ -58,7 +60,11 @@ func (c *LocalClients) Remove(id uuid.UUID) {
 func (c *LocalClients) SetClientConnected(id uuid.UUID, connected bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	client := c.clients[id]
+
+	client, ok := c.clients[id]
+	if !ok {
+		return
+	}
 	client.Connected = connected
 	client.LastSeen = time.Now()
 	c.clients[id] = client

@@ -33,8 +33,6 @@ func (h *RoomEventHandler) handleJoinedPlayer(roomID uuid.UUID, event domain.Eve
 		return err
 	}
 
-	log.Printf("Broadcasting joined player %s (%s) to %d members", event.CliendID, nickname, len(members))
-
 	for _, memberID := range members {
 		// Don't send to the player who just joined - they already got their response
 		if memberID == event.CliendID {

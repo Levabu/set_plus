@@ -11,7 +11,7 @@
 	import { browser } from "$app/environment";
 	import WaitingList from "./WaitingList.svelte";
 
-  let ws = $state<WS | null>(new WS("ws://localhost:8080/ws"))
+  let ws = $state<WS | null>(null);
   let gameState = $derived<MultiPlayerGameState | null>(ws?.game || null);
   let gameVersion = $state(GameVersions.classic.key) as GameVersionKey | null;
 	let cardsLeft = $derived((() => {
@@ -43,8 +43,11 @@
   //   deck: gameState?.deck
   // })
   $effect(() => {
+		ws = new WS("ws://localhost:8080/ws")
+
     return () => {
       ws?.socket?.close()
+			ws = null
     }
   })
 
