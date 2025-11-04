@@ -46,7 +46,7 @@
 		ws = new WS("ws://localhost:8080/ws")
 
     return () => {
-      ws?.socket?.close()
+      ws?.socket?.close(1000)
 			ws = null
     }
   })

@@ -11,14 +11,14 @@ import (
 
 type MemoryPresence struct {
 	clients map[uuid.UUID]PresenceClient
-	roomClients map[uuid.UUID]map[uuid.UUID]struct{}
+	activeRoomClients map[uuid.UUID]map[uuid.UUID]struct{}
 	mu sync.RWMutex
 }
 
 func NewMemoryPresence() *MemoryPresence {
 	return &MemoryPresence{
 		clients: make(map[uuid.UUID]PresenceClient),
-		roomClients: make(map[uuid.UUID]map[uuid.UUID]struct{}),
+		activeRoomClients: make(map[uuid.UUID]map[uuid.UUID]struct{}),
 	}
 }
 
@@ -46,7 +46,7 @@ func (p *MemoryPresence) GetActiveRoomMembers(ctx context.Context, roomID uuid.U
 	defer p.mu.RUnlock()
 
 	clientIDs := make([]uuid.UUID, 0)
-	room := p.roomClients[roomID]
+	room := p.activeRoomClients[roomID]
 	for clientID, _ := range room {
 		clientIDs = append(clientIDs, clientID)
 	}
@@ -66,10 +66,10 @@ func (p *MemoryPresence) JoinRoom(ctx context.Context, roomID uuid.UUID, clientI
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	if _, ok := p.roomClients[roomID]; !ok {
-		p.roomClients[roomID] = make(map[uuid.UUID]struct{})
+	if _, ok := p.activeRoomClients[roomID]; !ok {
+		p.activeRoomClients[roomID] = make(map[uuid.UUID]struct{})
 	}
-	p.roomClients[roomID][clientID] = struct{}{}
+	p.activeRoomClients[roomID][clientID] = struct{}{}
 	return nil
 }
 
@@ -81,7 +81,7 @@ func (p *MemoryPresence) LeaveRoom(ctx context.Context, clientID uuid.UUID) erro
 	client.Connected = false
 	client.LastSeen = time.Now().Unix()
 	p.SetClient(ctx, clientID, client)
-	roomClients := p.roomClients[client.RoomID]
+	roomClients := p.activeRoomClients[client.RoomID]
 	delete(roomClients, clientID)
 	return nil
 }
@@ -90,7 +90,7 @@ func (p *MemoryPresence) CleanupPresenceRoom(ctx context.Context, roomID uuid.UU
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	delete(p.roomClients, roomID)
+	delete(p.activeRoomClients, roomID)
 	for id, client := range p.clients {
 		if client.RoomID == roomID {
 			delete(p.clients, id)

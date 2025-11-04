@@ -34,7 +34,7 @@ func (cm *ConnectionManager) HandleConnection(client *domain.LocalClient) {
 	for {
 		_, msg, err := client.Conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseAbnormalClosure, websocket.CloseGoingAway) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseNormalClosure, websocket.CloseAbnormalClosure, websocket.CloseGoingAway) {
 				log.Println("Websocket error:", err)
 			}
 			cm.HandleDisconnection(client)
