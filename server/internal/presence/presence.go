@@ -13,6 +13,7 @@ type Presence interface {
 	SetClient(ctx context.Context, clientID uuid.UUID, status PresenceClient) error
 	GetClient(ctx context.Context, clientID uuid.UUID) (PresenceClient, error)
 	CleanupPresenceRoom(ctx context.Context, roomID uuid.UUID)
+	RemoveClient(ctx context.Context, clientID uuid.UUID, roomID uuid.UUID) error
 	// CleanupDisconnectedClients(ctx context.Context) error
 	// IsClientConnected(ctx context.Context, clientID uuid.UUID) (bool, error)
 	// UpdateHeartbeat(ctx context.Context, clientID uuid.UUID) error
@@ -20,9 +21,9 @@ type Presence interface {
 }
 
 type PresenceClient struct {
-	ID          uuid.UUID `json:"id"`
-	RoomID      uuid.UUID `json:"roomID,omitempty"`
-	Connected   bool      `json:"connected"`
-	LastSeen    int64     `json:"lastSeen"` // Unix timestamp
-	Reconnected bool      `json:"reconnected"`
+	ID             uuid.UUID `json:"id"`
+	RoomID         uuid.UUID `json:"roomID,omitempty"`
+	Connected      bool      `json:"connected"`
+	DisconnectedAt int64     `json:"lastSeen"` // Unix timestamp
+	Reconnected    bool      `json:"reconnected"`
 }

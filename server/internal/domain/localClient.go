@@ -9,12 +9,13 @@ import (
 )
 
 type LocalClient struct {
-	ID        uuid.UUID
-	Conn      *websocket.Conn
-	RoomID    uuid.UUID
-	Nickname  string
-	Connected bool
-	LastSeen  time.Time
+	ID             uuid.UUID
+	Conn           *websocket.Conn
+	RoomID         uuid.UUID
+	Nickname       string
+	Connected      bool
+	DisconnectedAt time.Time
+	ReconnectTimer *time.Timer
 }
 
 type LocalClientManager interface {
@@ -24,6 +25,7 @@ type LocalClientManager interface {
 	GetAll() map[uuid.UUID]*LocalClient
 	SetClientConnected(id uuid.UUID, connected bool)
 	CleanupLocalRoomClients(roomID uuid.UUID)
+	IsRoomEmpty(roomID uuid.UUID) bool
 }
 
 type LocalClients struct {
@@ -41,7 +43,6 @@ func (c *LocalClients) Add(client *LocalClient) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	client.Connected = true
-	client.LastSeen = time.Now()
 	c.clients[client.ID] = client
 }
 
@@ -66,7 +67,9 @@ func (c *LocalClients) SetClientConnected(id uuid.UUID, connected bool) {
 		return
 	}
 	client.Connected = connected
-	client.LastSeen = time.Now()
+	if !connected {
+		client.DisconnectedAt = time.Now()
+	}
 	c.clients[id] = client
 }
 
@@ -88,4 +91,17 @@ func (c *LocalClients) CleanupLocalRoomClients(roomID uuid.UUID) {
 			delete(c.clients, id)
 		}
 	}
+}
+
+func (c *LocalClients) IsRoomEmpty(roomID uuid.UUID) bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	counter := 0
+	for _, client := range c.clients {
+		if client.RoomID == roomID {
+			counter++
+		}
+	}
+
+	return counter == 0
 }

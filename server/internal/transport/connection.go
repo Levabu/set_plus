@@ -6,30 +6,29 @@ import (
 	"log"
 	"server/internal/config"
 	"server/internal/domain"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type ConnectionManager struct {
-	cfg     *config.Config
-	clients domain.LocalClientManager
-	router  domain.MessageRouter
+	cfg    *config.Config
+	router domain.MessageRouter
 }
 
-func NewConnectionManager(cfg *config.Config, clients domain.LocalClientManager, router domain.MessageRouter) *ConnectionManager {
+func NewConnectionManager(cfg *config.Config, router domain.MessageRouter) *ConnectionManager {
 	return &ConnectionManager{
-		cfg:     cfg,
-		clients: clients,
-		router:  router,
+		cfg:    cfg,
+		router: router,
 	}
 }
 
 func (cm *ConnectionManager) HandleConnection(client *domain.LocalClient) {
 	defer client.Conn.Close()
 
-	cm.clients.Add(client)
-	defer cm.clients.Remove(client.ID)
+	cm.cfg.LocalClients.Add(client)
+	defer cm.cfg.LocalClients.Remove(client.ID)
 
 	for {
 		_, msg, err := client.Conn.ReadMessage()
@@ -54,20 +53,44 @@ func (cm *ConnectionManager) HandleConnection(client *domain.LocalClient) {
 }
 
 func (cm *ConnectionManager) HandleDisconnection(client *domain.LocalClient) error {
-	cm.clients.SetClientConnected(client.ID, false)
-	cm.cfg.Presence.LeaveRoom(context.Background(), client.ID)
+	clientID := client.ID
+	roomID := client.RoomID
 
-	err := cm.cfg.Broker.PublishRoomUpdate(context.Background(), client.RoomID, domain.Event{
-		Type:     domain.PlayerLeftEvent,
-		CliendID: client.ID,
-	})
+	cm.cfg.LocalClients.SetClientConnected(clientID, false)
+	cm.cfg.Presence.LeaveRoom(context.Background(), clientID)
+
+	var err error
+	if roomID != uuid.Nil {
+		err = cm.cfg.Broker.PublishRoomUpdate(context.Background(), roomID, domain.Event{
+			Type:     domain.PlayerLeftEvent,
+			CliendID: clientID,
+		})
+	}
 
 	// set timer for local cleanup
+	if client.ReconnectTimer != nil {
+		client.ReconnectTimer.Stop()
+	}
+	client.ReconnectTimer = time.AfterFunc(cm.cfg.DisconnectedClientTTL, func() {
+		time.Sleep(cm.cfg.DisconnectedClientTTL)
+
+		client := cm.cfg.LocalClients.Get(clientID)
+		if client == nil || client.Connected || time.Since(client.DisconnectedAt) < cm.cfg.DisconnectedClientTTL {
+			return
+		}
+
+		cm.cfg.LocalClients.Remove(clientID)
+		cm.cfg.Presence.RemoveClient(context.Background(), clientID, roomID)
+		if roomID != uuid.Nil && cm.cfg.LocalClients.IsRoomEmpty(roomID) {
+			cm.CleanupRoom(roomID)
+		}
+	})
+
 	return err
 }
 
 func (cm *ConnectionManager) CleanupRoom(roomID uuid.UUID) {
-	cm.clients.CleanupLocalRoomClients(roomID)
+	cm.cfg.LocalClients.CleanupLocalRoomClients(roomID)
 	cm.cfg.Presence.CleanupPresenceRoom(context.Background(), roomID)
 	cm.cfg.Store.CleanupStoreRoom(context.Background(), roomID)
 }

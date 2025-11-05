@@ -7,6 +7,7 @@ import (
 	"server/internal/broker"
 	"server/internal/config"
 	"server/internal/domain"
+	"time"
 
 	"server/internal/events"
 	"server/internal/handlers"
@@ -46,13 +47,14 @@ func main() {
 		// Broker: redisBroker,
 		Broker: memoryBroker,
 		LocalClients: localClients,
+		DisconnectedClientTTL: time.Minute * 1,
 	}
 
 	eventHandler := events.NewRoomEventHandler(cfg)
 	memoryBroker.SetEventCallback(eventHandler.HandleRoomEvent)
 
 	router := handlers.NewRouter(cfg)
-	connectionManager := transport.NewConnectionManager(cfg, localClients, router)
+	connectionManager := transport.NewConnectionManager(cfg, router)
 	server := transport.NewServer(cfg, connectionManager)
 
 	http.HandleFunc("/ws", server.HandleWebSocket)

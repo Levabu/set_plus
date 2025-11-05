@@ -10,14 +10,14 @@ import (
 )
 
 type MemoryPresence struct {
-	clients map[uuid.UUID]PresenceClient
+	clients           map[uuid.UUID]PresenceClient
 	activeRoomClients map[uuid.UUID]map[uuid.UUID]struct{}
-	mu sync.RWMutex
+	mu                sync.RWMutex
 }
 
 func NewMemoryPresence() *MemoryPresence {
 	return &MemoryPresence{
-		clients: make(map[uuid.UUID]PresenceClient),
+		clients:           make(map[uuid.UUID]PresenceClient),
 		activeRoomClients: make(map[uuid.UUID]map[uuid.UUID]struct{}),
 	}
 }
@@ -37,7 +37,7 @@ func (p *MemoryPresence) SetClient(ctx context.Context, clientID uuid.UUID, stat
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	status.LastSeen = time.Now().Unix()
+	status.DisconnectedAt = time.Now().Unix()
 	p.clients[clientID] = status
 	return nil
 }
@@ -55,10 +55,9 @@ func (p *MemoryPresence) GetActiveRoomMembers(ctx context.Context, roomID uuid.U
 
 func (p *MemoryPresence) JoinRoom(ctx context.Context, roomID uuid.UUID, clientID uuid.UUID) error {
 	if err := p.SetClient(ctx, clientID, PresenceClient{
-		ID:        clientID,
-		RoomID:    roomID,
-		Connected: true,
-		LastSeen:  time.Now().Unix(),
+		ID:             clientID,
+		RoomID:         roomID,
+		Connected:      true,
 	}); err != nil {
 		return err
 	}
@@ -79,10 +78,12 @@ func (p *MemoryPresence) LeaveRoom(ctx context.Context, clientID uuid.UUID) erro
 		return err
 	}
 	client.Connected = false
-	client.LastSeen = time.Now().Unix()
+	client.DisconnectedAt = time.Now().Unix()
 	p.SetClient(ctx, clientID, client)
-	roomClients := p.activeRoomClients[client.RoomID]
-	delete(roomClients, clientID)
+	roomClients, ok := p.activeRoomClients[client.RoomID]
+	if ok {
+		delete(roomClients, clientID)
+	}
 	return nil
 }
 
@@ -96,4 +97,15 @@ func (p *MemoryPresence) CleanupPresenceRoom(ctx context.Context, roomID uuid.UU
 			delete(p.clients, id)
 		}
 	}
+}
+
+func (p *MemoryPresence) RemoveClient(ctx context.Context, clientID uuid.UUID, roomID uuid.UUID) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if activeClients, ok := p.activeRoomClients[roomID]; ok {
+		delete(activeClients, clientID)
+	}
+	delete(p.clients, clientID)
+	return nil
 }

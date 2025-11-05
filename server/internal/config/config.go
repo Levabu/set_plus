@@ -5,6 +5,7 @@ import (
 	"server/internal/domain"
 	"server/internal/presence"
 	"server/internal/store"
+	"time"
 )
 
 type Environment string
@@ -19,9 +20,10 @@ func (e Environment) IsDev() bool {
 }
 
 type Config struct {
-	Environment  Environment
-	Store        store.Store
-	Presence     presence.Presence
-	Broker       broker.Broker
-	LocalClients domain.LocalClientManager
+	Environment           Environment
+	Store                 store.Store
+	Presence              presence.Presence
+	Broker                broker.Broker
+	LocalClients          domain.LocalClientManager
+	DisconnectedClientTTL time.Duration
 }
