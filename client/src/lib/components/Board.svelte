@@ -10,6 +10,7 @@
 	import { generateNickname, LS_NICKNAME_KEY } from "$lib/utils/nicknames";
 	import { browser } from "$app/environment";
 	import WaitingList from "./WaitingList.svelte";
+	import { page } from "$app/state";
 
   let ws = $state<WS | null>(null);
   let gameState = $derived<MultiPlayerGameState | null>(ws?.game || null);
@@ -26,6 +27,7 @@
 	let roomLink = $state("")
 	let roomLinkError = $state("")
   let modalButtonText = $derived((() => {
+		if (joinRoomID && !roomLink && !ws?.roomID) return "Create Room"
     if (joinRoomID && !ws?.playerID) return "Join Room"
     if (joinRoomID && ws?.playerID) return "Waiting for the game to start..."
 		if (!joinRoomID && !ws?.playerID && roomLink) return "Join Room"
@@ -52,19 +54,18 @@
   })
 
   $effect(() => {
-    if (!window || joinRoomID) return
-    const params = new URLSearchParams(window.location.search)
-    const roomID = params.get("roomID")
+    if (!window || !page || joinRoomID) return
+		const roomID = page.url.searchParams.get("roomID")
     if (roomID) {
       console.log("roomID", roomID)
       joinRoomID = roomID
-      roomLink = window.location.href + `/?roomID=${roomID}`
+      roomLink = page.url.href + `/?roomID=${roomID}`
     }
   })
 
   $effect(() => {
-    if (ws?.roomID) {
-      roomLink = window.location.href + `/?roomID=${ws.roomID}`
+    if (ws?.roomID && page != null) {
+      roomLink = page.url.href + `/?roomID=${ws.roomID}`
     }
   })
 

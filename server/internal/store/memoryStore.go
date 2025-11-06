@@ -12,9 +12,9 @@ import (
 )
 
 type MemoryStore struct {
-	games         map[uuid.UUID]*game.Game
-	rooms         map[uuid.UUID]*domain.Room
-	mu            sync.RWMutex
+	games map[uuid.UUID]*game.Game
+	rooms map[uuid.UUID]*domain.Room
+	mu    sync.RWMutex
 }
 
 func NewMemoryStore() *MemoryStore {
