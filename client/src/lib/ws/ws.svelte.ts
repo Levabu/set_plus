@@ -1,8 +1,8 @@
 import { GameVersions, ROTATIONS, type GameVersion, type GameVersionKey } from "$lib/engine/types";
 import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
-import { LS_NICKNAME_KEY } from "$lib/utils/nicknames";
 import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage, type ErrorMessage, type RoomMember } from "./messages";
 import { replaceState } from "$app/navigation"
+import { Session } from "$lib/utils/sessions";
 
 export const CONNECTION_STATUS = {
   CONNECTED: 'connected',
@@ -24,8 +24,10 @@ export class WS {
   })
   roomMembers: RoomMember[] = $state([])
 
-  constructor(url: string = "ws://localhost:8080") {
-    let ws = new WebSocket(url)
+  constructor(url: string, clientID: string | null = null) {
+    let ws = new WebSocket(
+      clientID ? `${url}?clientID=${clientID}` : url
+    )
     this.socket = ws
 
     ws.onopen = () => {
@@ -111,7 +113,7 @@ export class WS {
     this.roomID = message.roomID;
     this.playerID = message.playerID;
     this.isRoomOwner = true
-    localStorage.setItem(LS_NICKNAME_KEY, message.nickname)
+    new Session(message.roomID).save(message.playerID, message.nickname)
     replaceState(`/multi?roomID=${this.roomID}`, {});
     this.roomMembers.push({
       id: message.playerID,
@@ -130,7 +132,7 @@ export class WS {
     if (this.playerID) return
     this.roomID = message.roomID;
     this.playerID = message.playerID;
-    localStorage.setItem(LS_NICKNAME_KEY, message.nickname)
+    new Session(message.roomID).save(message.playerID, message.nickname)
     replaceState(`/multi?roomID=${this.roomID}`, {});
   }
 

@@ -7,10 +7,11 @@
 	import { CONNECTION_STATUS, WS } from "$lib/ws/ws.svelte";
 	import { OUT_MESSAGES, type CreateRoomMessage, type JoinRoomMessage } from "$lib/ws/messages";
 	import FormInput from "./lib/FormInput.svelte";
-	import { generateNickname, LS_NICKNAME_KEY } from "$lib/utils/nicknames";
+	import { generateNickname } from "$lib/utils/nicknames";
 	import { browser } from "$app/environment";
 	import WaitingList from "./WaitingList.svelte";
 	import { page } from "$app/state";
+	import { Session } from "$lib/utils/sessions";
 
   let ws = $state<WS | null>(null);
   let gameState = $derived<MultiPlayerGameState | null>(ws?.game || null);
@@ -45,7 +46,12 @@
   //   deck: gameState?.deck
   // })
   $effect(() => {
-		ws = new WS("ws://localhost:8080/ws")
+		let clientID: string | null = null
+		if (joinRoomID) {
+			const session = new Session(joinRoomID).load()
+			if (session !== null) clientID = session.clientID
+		}
+		ws = new WS("ws://localhost:8080/ws", clientID)
 
     return () => {
       ws?.socket?.close(1000)
@@ -71,8 +77,9 @@
 
 	$effect(() => {
 		if (browser) {
-			const stored = localStorage.getItem(LS_NICKNAME_KEY)
-			if (stored) nickname = stored
+			const session = new Session(joinRoomID).load()
+			
+			if (session !== null) nickname = session.nickname
 		}
 	})
 
@@ -100,10 +107,11 @@
     
     if (joinRoomID || (roomLink && !ws.playerID)) {
       const params = new URLSearchParams(roomLink.split("/").at(-1))
-      const roomID = params.get("roomID")
+      const roomID = params.get("roomID") || joinRoomID
+
       ws.send({
         type: OUT_MESSAGES.JOIN_ROOM,
-        roomID: roomID || joinRoomID,
+        roomID: roomID,
 				nickname
       } as JoinRoomMessage);
     } else if (!joinRoomID && !ws.roomID) {
