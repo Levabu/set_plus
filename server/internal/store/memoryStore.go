@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"log"
 	"server/internal/domain"
 	"server/internal/game"
@@ -14,7 +15,6 @@ type MemoryStore struct {
 	games         map[uuid.UUID]*game.Game
 	rooms         map[uuid.UUID]*domain.Room
 	mu            sync.RWMutex
-	eventCallback func(roomID uuid.UUID, event domain.Event) error
 }
 
 func NewMemoryStore() *MemoryStore {
@@ -34,7 +34,13 @@ func (s *MemoryStore) SetRoom(ctx context.Context, room *domain.Room) error {
 func (s *MemoryStore) GetRoom(ctx context.Context, id uuid.UUID) (*domain.Room, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.rooms[id], nil
+
+	var err error
+	room, ok := s.rooms[id]
+	if !ok {
+		err = errors.New("room doesn't exist")
+	}
+	return room, err
 }
 
 func (s *MemoryStore) SetGameState(ctx context.Context, game *game.Game) error {
@@ -46,7 +52,13 @@ func (s *MemoryStore) SetGameState(ctx context.Context, game *game.Game) error {
 func (s *MemoryStore) GetGameState(ctx context.Context, id uuid.UUID) (*game.Game, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	return s.games[id], nil
+
+	var err error
+	gameState, ok := s.games[id]
+	if !ok {
+		err = errors.New("game doesn't exist")
+	}
+	return gameState, err
 }
 
 func (s *MemoryStore) CleanupAfterGame(ctx context.Context, gameID uuid.UUID) {
