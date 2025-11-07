@@ -37,7 +37,7 @@ func (h *GameHandler) HandleStartGame(client *domain.LocalClient, rawMsg json.Ra
 	r.GameID = gameInstance.GameID
 
 	if r.OwnerID != client.ID {
-		return SendError(client, domain.ErrorMessage{
+		return domain.SendError(client, domain.ErrorMessage{
 			RefType: domain.StartGame,
 			Reason:  "only owner of the room can start the game",
 		})
@@ -49,7 +49,7 @@ func (h *GameHandler) HandleStartGame(client *domain.LocalClient, rawMsg json.Ra
 		return err
 	}
 
-	players, err := h.config.Presence.GetActiveRoomMembers(context.Background(), r.ID)
+	players, err := h.config.Presence.GetActiveRoomMembersIDs(context.Background(), r.ID)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,6 @@ func (h *GameHandler) HandleStartGame(client *domain.LocalClient, rawMsg json.Ra
 		return err
 	}
 
-	// Publish room event - this will be handled by the room event subscription
 	err = h.config.Broker.PublishRoomUpdate(context.Background(), r.ID, domain.Event{
 		Type:     domain.GameStartedEvent,
 		CliendID: client.ID,
@@ -88,7 +87,7 @@ func (h *GameHandler) HandleCheckSet(client *domain.LocalClient, rawMsg json.Raw
 	}
 
 	if msg.GameID != r.GameID {
-		return SendError(client, domain.ErrorMessage{
+		return domain.SendError(client, domain.ErrorMessage{
 			RefType: domain.CheckSet,
 			Reason:  "Incorrect game id",
 		})
@@ -100,14 +99,14 @@ func (h *GameHandler) HandleCheckSet(client *domain.LocalClient, rawMsg json.Raw
 	}
 
 	if gameState.Finished {
-		return SendError(client, domain.ErrorMessage{
+		return domain.SendError(client, domain.ErrorMessage{
 			RefType: domain.CheckSet,
 			Reason:  "game already finished",
 		})
 	}
 
 	if err := h.validateSetInput(gameState, msg.CardIDs); err != nil {
-		return SendError(client, domain.ErrorMessage{
+		return domain.SendError(client, domain.ErrorMessage{
 			RefType: domain.CheckSet,
 			Reason:  err.Error(),
 		})
@@ -124,14 +123,14 @@ func (h *GameHandler) HandleCheckSet(client *domain.LocalClient, rawMsg json.Raw
 
 	isSet := gameState.IsSet(cards)
 	if !isSet {
-		SendJSON(client, domain.CheckSetResultMessage{
+		domain.SendJSON(client, domain.CheckSetResultMessage{
 			BaseOutMessage: domain.BaseOutMessage{Type: domain.CheckSetResult},
 			IsSet:          false,
 		})
 		return nil
 	}
 
-	SendJSON(client, domain.CheckSetResultMessage{
+	domain.SendJSON(client, domain.CheckSetResultMessage{
 		BaseOutMessage: domain.BaseOutMessage{Type: domain.CheckSetResult},
 		IsSet:          true,
 	})

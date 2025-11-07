@@ -12,4 +12,5 @@ type MessageRouter interface {
 type ConnectionManager interface {
 	HandleConnection(client *LocalClient)
 	HandleDisconnection(client *LocalClient) error
+	HandleReconnection(client *LocalClient) error
 }

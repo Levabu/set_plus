@@ -5,11 +5,12 @@ import "github.com/google/uuid"
 type EventType string
 
 const (
-	PlayerJoinedEvent     EventType = "JOINED_PLAYER"
-	PlayerLeftEvent       EventType = "LEFT_PLAYER"
-	GameStartedEvent      EventType = "STARTED_GAME"
-	GameStateChangedEvent EventType = "CHANGED_GAME_STATE"
-	GameOverEvent         EventType = "GAME_OVER"
+	PlayerJoinedEvent      EventType = "JOINED_PLAYER"
+	PlayerReconnectedEvent EventType = "PLAYER_RECONNECTED_EVENT"
+	PlayerLeftEvent        EventType = "LEFT_PLAYER"
+	GameStartedEvent       EventType = "STARTED_GAME"
+	GameStateChangedEvent  EventType = "CHANGED_GAME_STATE"
+	GameOverEvent          EventType = "GAME_OVER"
 )
 
 type Event struct {

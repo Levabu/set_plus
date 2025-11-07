@@ -13,10 +13,11 @@ type InMessage struct {
 }
 
 const (
-	CreateRoom InMessageType = "CREATE_ROOM"
-	JoinRoom   InMessageType = "JOIN_ROOM"
-	StartGame  InMessageType = "START_GAME"
-	CheckSet   InMessageType = "CHECK_SET"
+	CreateRoom      InMessageType = "CREATE_ROOM"
+	JoinRoom        InMessageType = "JOIN_ROOM"
+	ReconnectToRoom InMessageType = "RECONNECT_TO_ROOM"
+	StartGame       InMessageType = "START_GAME"
+	CheckSet        InMessageType = "CHECK_SET"
 )
 
 type StartGameMessage struct {
@@ -50,14 +51,16 @@ type BaseOutMessage struct {
 }
 
 const (
-	CreatedRoom      OutMessageType = "CREATED_ROOM"
-	JoinedRoom       OutMessageType = "JOINED_ROOM"
-	LeftRoom         OutMessageType = "LEFT_ROOM"
-	StartedGame      OutMessageType = "STARTED_GAME"
-	CheckSetResult   OutMessageType = "CHECK_SET_RESULT"
-	ChangedGameState OutMessageType = "CHANGED_GAME_STATE"
-	GameOver         OutMessageType = "GAME_OVER"
-	ErrorOut         OutMessageType = "ERROR"
+	CreatedRoom            OutMessageType = "CREATED_ROOM"
+	JoinedRoom             OutMessageType = "JOINED_ROOM"
+	LeftRoom               OutMessageType = "LEFT_ROOM"
+	ReconnectedToRoom      OutMessageType = "RECONNECTED_TO_ROOM"
+	SendStateToReconnected OutMessageType = "SEND_STATE_ TO_RECONNECTED"
+	StartedGame            OutMessageType = "STARTED_GAME"
+	CheckSetResult         OutMessageType = "CHECK_SET_RESULT"
+	ChangedGameState       OutMessageType = "CHANGED_GAME_STATE"
+	GameOver               OutMessageType = "GAME_OVER"
+	ErrorOut               OutMessageType = "ERROR"
 )
 
 type CreatedRoomMessage struct {
@@ -77,6 +80,22 @@ type JoinedRoomMessage struct {
 type LeftRoomMessage struct {
 	BaseOutMessage
 	PlayerID uuid.UUID `json:"playerID"`
+}
+
+type ReconnectedToRoomMessage struct {
+	BaseOutMessage
+	PlayerID uuid.UUID `json:"playerID"`
+}
+
+type SendStateToReconnectedMessage struct {
+	BaseOutMessage
+	IsOwner     bool                      `json:"isOwner"`
+	RoomID      uuid.UUID                 `json:"roomID"`
+	GameID      uuid.UUID                 `json:"gameID"`
+	Started     bool                      `json:"started"`
+	GameVersion game.GameVersion          `json:"gameVersion"`
+	Deck        []game.Card               `json:"deck"`
+	Players     map[uuid.UUID]game.Player `json:"players"`
 }
 
 type StartedGameMessage struct {

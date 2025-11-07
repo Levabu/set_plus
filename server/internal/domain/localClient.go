@@ -11,6 +11,7 @@ import (
 type LocalClient struct {
 	ID             uuid.UUID
 	Conn           *websocket.Conn
+	WriteChan      chan interface{}
 	RoomID         uuid.UUID
 	Nickname       string
 	Connected      bool
@@ -42,7 +43,6 @@ func NewLocalClients() *LocalClients {
 func (c *LocalClients) Add(client *LocalClient) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	client.Connected = true
 	c.clients[client.ID] = client
 }
 

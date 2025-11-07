@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"errors"
-	"log"
 	"server/internal/domain"
 	"server/internal/game"
 	"sync"
@@ -28,7 +27,6 @@ func (s *MemoryStore) SetRoom(ctx context.Context, room *domain.Room) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.rooms[room.ID] = room
-	log.Println(room)
 	return nil
 }
 func (s *MemoryStore) GetRoom(ctx context.Context, id uuid.UUID) (*domain.Room, error) {

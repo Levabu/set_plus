@@ -41,16 +41,35 @@ func (p *MemoryPresence) SetClient(ctx context.Context, clientID uuid.UUID, stat
 	p.clients[clientID] = status
 	return nil
 }
-func (p *MemoryPresence) GetActiveRoomMembers(ctx context.Context, roomID uuid.UUID) ([]uuid.UUID, error) {
+func (p *MemoryPresence) GetActiveRoomMembersIDs(ctx context.Context, roomID uuid.UUID) ([]uuid.UUID, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
 	clientIDs := make([]uuid.UUID, 0)
 	room := p.activeRoomClients[roomID]
-	for clientID, _ := range room {
+	for clientID := range room {
 		clientIDs = append(clientIDs, clientID)
 	}
 	return clientIDs, nil
+}
+
+func (p *MemoryPresence) GetActiveRoomMembers(ctx context.Context, roomID uuid.UUID) ([]PresenceClient, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	clients := make([]PresenceClient, 0)
+	room, ok := p.activeRoomClients[roomID]
+	if !ok {
+		return nil, nil
+	}
+	for clientID := range room {
+		client, ok := p.clients[clientID]
+		if !ok {
+			continue
+		}
+		clients = append(clients, client)
+	}
+	return clients, nil
 }
 
 func (p *MemoryPresence) JoinRoom(ctx context.Context, roomID uuid.UUID, clientID uuid.UUID) error {

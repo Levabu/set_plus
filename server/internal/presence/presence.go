@@ -9,7 +9,8 @@ import (
 type Presence interface {
 	JoinRoom(ctx context.Context, roomID uuid.UUID, clientID uuid.UUID) error
 	LeaveRoom(ctx context.Context, clientID uuid.UUID) error
-	GetActiveRoomMembers(ctx context.Context, roomID uuid.UUID) ([]uuid.UUID, error)
+	GetActiveRoomMembersIDs(ctx context.Context, roomID uuid.UUID) ([]uuid.UUID, error)
+	GetActiveRoomMembers(ctx context.Context, roomID uuid.UUID) ([]PresenceClient, error)
 	SetClient(ctx context.Context, clientID uuid.UUID, status PresenceClient) error
 	GetClient(ctx context.Context, clientID uuid.UUID) (PresenceClient, error)
 	CleanupPresenceRoom(ctx context.Context, roomID uuid.UUID)
@@ -25,5 +26,4 @@ type PresenceClient struct {
 	RoomID         uuid.UUID `json:"roomID,omitempty"`
 	Connected      bool      `json:"connected"`
 	DisconnectedAt int64     `json:"lastSeen"` // Unix timestamp
-	Reconnected    bool      `json:"reconnected"`
 }

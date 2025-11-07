@@ -35,9 +35,24 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := &domain.LocalClient{
-		ID:   uuid.New(),
-		Conn: conn,
+	queryParams := r.URL.Query()
+	clientID, err := uuid.Parse(queryParams.Get("clientID"))
+
+	var client *domain.LocalClient
+	client = s.config.LocalClients.Get(clientID)
+	if err == nil && clientID != uuid.Nil && client != nil && client.RoomID != uuid.Nil {
+		if client.Conn != nil {
+			client.Conn.Close()
+		}
+		client.Conn = conn
+		client.WriteChan = make(chan interface{}, 256)
+	} else {
+		client = &domain.LocalClient{
+			ID:   uuid.New(),
+			Conn: conn,
+			Connected: true,
+			WriteChan: make(chan interface{}, 256),
+		}
 	}
 
 	go s.connectionManager.HandleConnection(client)

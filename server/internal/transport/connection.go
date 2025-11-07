@@ -3,9 +3,13 @@ package transport
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"server/internal/config"
 	"server/internal/domain"
+	"server/internal/game"
+
+	// "server/internal/presence"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,10 +30,15 @@ func NewConnectionManager(cfg *config.Config, router domain.MessageRouter) *Conn
 
 func (cm *ConnectionManager) HandleConnection(client *domain.LocalClient) {
 	defer client.Conn.Close()
+	defer close(client.WriteChan)
 
-	cm.cfg.LocalClients.Add(client)
-	defer cm.cfg.LocalClients.Remove(client.ID)
+	if client.Connected {
+		cm.cfg.LocalClients.Add(client)
+	} else {
+		cm.HandleReconnection(client)
+	}
 
+	go cm.StartWriter(client)
 	for {
 		_, msg, err := client.Conn.ReadMessage()
 		if err != nil {
@@ -89,8 +98,77 @@ func (cm *ConnectionManager) HandleDisconnection(client *domain.LocalClient) err
 	return err
 }
 
+func (cm *ConnectionManager) HandleReconnection(client *domain.LocalClient) error {
+	fmt.Printf("Reconnect: %s\n", client.ID)
+	if client.ReconnectTimer != nil {
+		client.ReconnectTimer.Stop()
+	}
+	// update locally
+	cm.cfg.LocalClients.SetClientConnected(client.ID, true)
+	// notify
+	cm.cfg.Presence.JoinRoom(context.Background(), client.RoomID, client.ID)
+	cm.cfg.Broker.PublishRoomUpdate(context.Background(), client.RoomID, domain.Event{
+		Type:     domain.PlayerReconnectedEvent,
+		CliendID: client.ID,
+	})
+	// send current state to the player
+	msg := domain.SendStateToReconnectedMessage{BaseOutMessage: domain.BaseOutMessage{Type: domain.SendStateToReconnected}}
+
+	room, err := cm.cfg.Store.GetRoom(context.Background(), client.RoomID)
+	if err != nil || room == nil {
+		return domain.SendError(client, domain.ErrorMessage{
+			RefType: domain.ReconnectToRoom,
+			Reason:  "Room doesn't exist",
+		})
+	}
+	msg.IsOwner = room.OwnerID == client.ID
+	msg.RoomID = room.ID
+	msg.Started = room.Started
+
+	if room.Started && room.GameID != uuid.Nil {
+		msg.GameID = room.GameID
+		game, err := cm.cfg.Store.GetGameState(context.Background(), room.GameID)
+		if err != nil || game == nil {
+			return domain.SendError(client, domain.ErrorMessage{
+				RefType: domain.ReconnectToRoom,
+				Reason:  "Game doesn't exist",
+			})
+		}
+		msg.GameVersion = game.GameVersion
+		msg.Deck = game.Deck
+		msg.Players = *game.Players
+	} else {
+		activeClients, err := cm.cfg.Presence.GetActiveRoomMembers(context.Background(), room.ID)
+		if err != nil {
+			return err
+		}
+		players := make(map[uuid.UUID]game.Player, 0)
+		for _, c := range activeClients {
+			if c.ID == client.ID {
+				continue
+			}
+			players[c.ID] = game.Player{ID: c.ID}
+		}
+		msg.Players = players
+	}
+	fmt.Printf("SENDING STATE: %v\n", msg.IsOwner)
+	bytes, err := json.Marshal(msg)
+	fmt.Println(err)
+	fmt.Println(string(bytes))
+	return domain.SendJSON(client, msg)
+}
+
 func (cm *ConnectionManager) CleanupRoom(roomID uuid.UUID) {
 	cm.cfg.LocalClients.CleanupLocalRoomClients(roomID)
 	cm.cfg.Presence.CleanupPresenceRoom(context.Background(), roomID)
 	cm.cfg.Store.CleanupStoreRoom(context.Background(), roomID)
+}
+
+func (cm *ConnectionManager) StartWriter(client *domain.LocalClient) {
+	for msg := range client.WriteChan {
+		if err := client.Conn.WriteJSON(msg); err != nil {
+			log.Printf("Write error: %v", err)
+			break
+		}
+	}
 }

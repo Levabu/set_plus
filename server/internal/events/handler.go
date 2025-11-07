@@ -39,6 +39,8 @@ func (h *RoomEventHandler) HandleRoomEvent(roomID uuid.UUID, event domain.Event)
 		return h.handleJoinedPlayer(roomID, event)
 	case domain.PlayerLeftEvent:
 		return h.handleDisconnectedPlayer(roomID, event)
+	case domain.PlayerReconnectedEvent:
+		return h.handleReconnectedPlayer(roomID, event)
 	case domain.GameStartedEvent:
 		return h.handleStartedGame(roomID, event)
 	case domain.GameStateChangedEvent:
@@ -50,7 +52,7 @@ func (h *RoomEventHandler) HandleRoomEvent(roomID uuid.UUID, event domain.Event)
 }
 
 func (h *RoomEventHandler) BroadcastToRoom(ctx context.Context, roomID uuid.UUID, message interface{}, localClients domain.LocalClientManager) error {
-	members, err := h.config.Presence.GetActiveRoomMembers(ctx, roomID)
+	members, err := h.config.Presence.GetActiveRoomMembersIDs(ctx, roomID)
 	if err != nil {
 		return err
 	}
@@ -58,7 +60,7 @@ func (h *RoomEventHandler) BroadcastToRoom(ctx context.Context, roomID uuid.UUID
 	for _, memberID := range members {
 		memberClient := localClients.Get(memberID)
 		if memberClient != nil {
-			memberClient.Conn.WriteJSON(message)
+			domain.SendJSON(memberClient, message)
 		}
 	}
 	return nil

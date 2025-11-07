@@ -31,7 +31,7 @@ func (h *RoomHandler) HandleCreateRoom(client *domain.LocalClient, rawMsg json.R
 	}
 
 	if len(msg.Nickname) < 1 || len(msg.Nickname) > 20 {
-		return SendError(client, domain.ErrorMessage{
+		return domain.SendError(client, domain.ErrorMessage{
 			RefType: domain.CreateRoom,
 			Field:   "nickname",
 			Reason:  "Nickname should be 1 to 20 characters long",
@@ -62,7 +62,7 @@ func (h *RoomHandler) HandleCreateRoom(client *domain.LocalClient, rawMsg json.R
 		h.eventHandler.HandleRoomEventMessage(newRoom.ID, clientID, msgData)
 	})
 
-	SendJSON(client, domain.CreatedRoomMessage{
+	domain.SendJSON(client, domain.CreatedRoomMessage{
 		BaseOutMessage: domain.BaseOutMessage{Type: domain.CreatedRoom},
 		RoomID:         newRoom.ID,
 		PlayerID:       newRoom.OwnerID,
@@ -78,7 +78,7 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 	}
 
 	if len(msg.Nickname) < 1 || len(msg.Nickname) > 20 {
-		return SendError(client, domain.ErrorMessage{
+		return domain.SendError(client, domain.ErrorMessage{
 			RefType: domain.JoinRoom,
 			Field:   "nickname",
 			Reason:  "Nickname should be 1 to 20 characters long",
@@ -88,7 +88,7 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 
 	joinedRoom, err := h.config.Store.GetRoom(context.Background(), msg.RoomID)
 	if err != nil {
-		return SendError(client, domain.ErrorMessage{
+		return domain.SendError(client, domain.ErrorMessage{
 			RefType: domain.JoinRoom,
 			Field:   "roomLink",
 			Reason:  "Room doesn't exist",
@@ -96,7 +96,7 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 	}
 
 	if joinedRoom.Started {
-		return SendError(client, domain.ErrorMessage{
+		return domain.SendError(client, domain.ErrorMessage{
 			RefType: domain.JoinRoom,
 			Field:   "roomLink",
 			Reason:  "Game already started",
@@ -109,7 +109,7 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 	}
 
 	// Send response to the joining client first
-	SendJSON(client, domain.JoinedRoomMessage{
+	domain.SendJSON(client, domain.JoinedRoomMessage{
 		BaseOutMessage: domain.BaseOutMessage{Type: domain.JoinedRoom},
 		RoomID:         joinedRoom.ID,
 		PlayerID:       client.ID,
@@ -117,7 +117,7 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 	})
 
 	// Send existing room members to the newly joined player
-	existingMembers, err := h.config.Presence.GetActiveRoomMembers(context.Background(), joinedRoom.ID)
+	existingMembers, err := h.config.Presence.GetActiveRoomMembersIDs(context.Background(), joinedRoom.ID)
 	if err == nil {
 		for _, memberID := range existingMembers {
 			// Don't send the player their own join message again
@@ -127,7 +127,7 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 			memberClient := h.config.LocalClients.Get(memberID)
 			if memberClient != nil {
 				// Send info about existing member to the new player
-				SendJSON(client, domain.JoinedRoomMessage{
+				domain.SendJSON(client, domain.JoinedRoomMessage{
 					BaseOutMessage: domain.BaseOutMessage{Type: domain.JoinedRoom},
 					RoomID:         joinedRoom.ID,
 					PlayerID:       memberID,
