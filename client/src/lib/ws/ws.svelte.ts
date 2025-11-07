@@ -1,6 +1,6 @@
 import { GameVersions, ROTATIONS, type GameVersion, type GameVersionKey } from "$lib/engine/types";
 import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
-import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage, type ErrorMessage, type RoomMember, type LeftRoomMessage } from "./messages";
+import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage, type ErrorMessage, type RoomMember, type LeftRoomMessage, type ReconnectedToRoomMessage, type SendStateToReconnectedMessage } from "./messages";
 import { replaceState } from "$app/navigation"
 import { Session } from "$lib/utils/sessions";
 
@@ -90,6 +90,12 @@ export class WS {
       case IN_MESSAGES.LEFT_ROOM:
         this.handleLeftRoomMessage(message as LeftRoomMessage);
         break;
+      case IN_MESSAGES.RECONNECTED_TO_ROOM:
+        this.handleReconnectedMessage(message as ReconnectedToRoomMessage);
+        break;
+      case IN_MESSAGES.SEND_STATE_TO_RECONNECTED:
+        this.handleSendStateToReconnectedMessage(message as SendStateToReconnectedMessage);
+        break;
       case IN_MESSAGES.STARTED_GAME:
         this.handleStartedGameMessage(message as StartedGameMessage);
         break;
@@ -143,6 +149,66 @@ export class WS {
     const index = this.roomMembers.findIndex((member) => member.id === message.playerID);
     if (index !== -1) {
       this.roomMembers[index].isConnected = false;
+    }
+  }
+
+  handleReconnectedMessage(message: ReconnectedToRoomMessage): void {
+    // received by other players, not the reconnected client
+    const session = new Session(message.roomID).load();
+    if ((session && session.clientID === message.playerID) || (this.playerID === message.playerID)) return
+    console.log("Player reconnected:", message.playerID);
+    const index = this.roomMembers.findIndex((member) => member.id === message.playerID);
+    console.log ("Reconnected player index:", index);
+    if (index !== -1) {
+      this.roomMembers[index].isConnected = true;
+    }
+  }
+
+  handleSendStateToReconnectedMessage(message: SendStateToReconnectedMessage): void {
+    console.log("Restoring state for reconnected player:", message.playerID);
+    const session = new Session(message.roomID).load();
+    if (!session || session.clientID !== message.playerID) return
+    this.playerID = message.playerID
+    this.isRoomOwner = message.isOwner
+    this.roomID = message.roomID
+    this.roomMembers.push({
+      id: message.playerID,
+      nickname: session.nickname,
+      isConnected: true,
+    })
+    for (const memberID in message.players) {
+      const member = message.players[memberID];
+      this.roomMembers.push({
+        id: member.id,
+        nickname: member.nickname,
+        isConnected: true,
+      })
+    }
+
+    if (message.started) {
+      const gameVersion = GameVersions[message.gameVersion!]
+      if (!gameVersion) return
+      this.game = new MultiPlayerGameState(gameVersion)
+      if (message.gameID) {
+        this.game.id = message.gameID;
+      }
+      this.game.hasGameStarted = true;
+      this.game.playerID = this.playerID
+       
+      if (message.deck) {
+        this.game.deck = message.deck.map((card: any) => ({
+          id: card.id,
+          isVisible: card.isVisible,
+          isSelected: card.isSelected,
+          isDiscarded: card.isDiscarded,
+          color: card.color,
+          shape: card.shape,
+          number: Number(card.number),
+          shading: card.shading,
+          rotation: card.rotation || ROTATIONS.vertical,
+        }));
+      }
+      this.game.players = message.players
     }
   }
 

@@ -30,6 +30,7 @@
   let modalButtonText = $derived((() => {
 		if (joinRoomID && !roomLink && !ws?.roomID) return "Create Room"
     if (joinRoomID && !ws?.playerID) return "Join Room"
+		if (ws?.playerID && ws.isRoomOwner && !gameState?.hasGameStarted) return "Start Game"
     if (joinRoomID && ws?.playerID) return "Waiting for the game to start..."
 		if (!joinRoomID && !ws?.playerID && roomLink) return "Join Room"
     if (!ws?.roomID) return "Create Room"
@@ -37,7 +38,7 @@
   })())
 	let nickname = $state(generateNickname())
 	let nicknameError = $state("")
-	let isButtonDisabled = $derived(Boolean(joinRoomID && ws?.playerID) || !!nicknameError)
+	let isButtonDisabled = $derived(!ws?.isRoomOwner && Boolean(joinRoomID && ws?.playerID) || !!nicknameError)
 
   // $inspect({
   //   playerID: gameState?.playerID,
@@ -104,6 +105,10 @@
 			nicknameError = "Nickname should be 1 to 20 characters long"
 			return
 		}
+
+		if (ws?.isRoomOwner) {
+      ws.handleStartGame(gameVersion)
+		}
     
     if (joinRoomID || (roomLink && !ws.playerID)) {
       const params = new URLSearchParams(roomLink.split("/").at(-1))
@@ -119,8 +124,6 @@
         type: OUT_MESSAGES.CREATE_ROOM,
 				nickname
       } as CreateRoomMessage);
-    } else {
-      ws.handleStartGame(gameVersion)
     }
   }
 

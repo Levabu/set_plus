@@ -47,6 +47,8 @@ export const IN_MESSAGES = {
   CREATED_ROOM: 'CREATED_ROOM',
   JOINED_ROOM: 'JOINED_ROOM',
   LEFT_ROOM: 'LEFT_ROOM',
+  RECONNECTED_TO_ROOM: 'RECONNECTED_TO_ROOM',
+  SEND_STATE_TO_RECONNECTED: 'SEND_STATE_TO_RECONNECTED',
   STARTED_GAME: 'STARTED_GAME',
   CHECK_SET_RESULT: 'CHECK_SET_RESULT',
   CHANGED_GAME_STATE: 'CHANGED_GAME_STATE',
@@ -84,6 +86,24 @@ export interface LeftRoomMessage {
   playerID: string;
 }
 
+export interface SendStateToReconnectedMessage {
+  readonly type: typeof IN_MESSAGES.SEND_STATE_TO_RECONNECTED;
+  playerID: string;
+  isOwner: boolean;
+  roomID: string;
+  gameID?: string;
+  started: boolean;
+  gameVersion?: GameVersionKey;
+  deck?: Card[];
+  players: Record<string, Player>;
+}
+
+export interface ReconnectedToRoomMessage {
+  readonly type: typeof IN_MESSAGES.RECONNECTED_TO_ROOM;
+  roomID: string;
+  playerID: string;
+}
+
 export interface CheckSetResultMessage {
   readonly type: typeof IN_MESSAGES.CHECK_SET_RESULT;
   isSet: boolean;
@@ -117,6 +137,8 @@ export type InMessage =
     | CreatedRoomMessage
     | JoinedRoomMessage
     | LeftRoomMessage
+    | SendStateToReconnectedMessage
+    | ReconnectedToRoomMessage
     | CheckSetResultMessage
     | ChangedGameStateMessage
     | GameOverMessage

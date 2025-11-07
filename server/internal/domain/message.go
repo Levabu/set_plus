@@ -55,7 +55,7 @@ const (
 	JoinedRoom             OutMessageType = "JOINED_ROOM"
 	LeftRoom               OutMessageType = "LEFT_ROOM"
 	ReconnectedToRoom      OutMessageType = "RECONNECTED_TO_ROOM"
-	SendStateToReconnected OutMessageType = "SEND_STATE_ TO_RECONNECTED"
+	SendStateToReconnected OutMessageType = "SEND_STATE_TO_RECONNECTED"
 	StartedGame            OutMessageType = "STARTED_GAME"
 	CheckSetResult         OutMessageType = "CHECK_SET_RESULT"
 	ChangedGameState       OutMessageType = "CHANGED_GAME_STATE"
@@ -84,17 +84,19 @@ type LeftRoomMessage struct {
 
 type ReconnectedToRoomMessage struct {
 	BaseOutMessage
+	RoomID   uuid.UUID `json:"roomID"`
 	PlayerID uuid.UUID `json:"playerID"`
 }
 
 type SendStateToReconnectedMessage struct {
 	BaseOutMessage
+	PlayerID    uuid.UUID                 `json:"playerID"`
 	IsOwner     bool                      `json:"isOwner"`
 	RoomID      uuid.UUID                 `json:"roomID"`
-	GameID      uuid.UUID                 `json:"gameID"`
+	GameID      uuid.UUID                 `json:"gameID,omitempty"`
 	Started     bool                      `json:"started"`
-	GameVersion game.GameVersion          `json:"gameVersion"`
-	Deck        []game.Card               `json:"deck"`
+	GameVersion game.GameVersion          `json:"gameVersion,omitempty"`
+	Deck        []game.Card               `json:"deck,omitempty"`
 	Players     map[uuid.UUID]game.Player `json:"players"`
 }
 

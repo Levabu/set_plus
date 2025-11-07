@@ -106,7 +106,7 @@ func (cm *ConnectionManager) HandleReconnection(client *domain.LocalClient) erro
 	// update locally
 	cm.cfg.LocalClients.SetClientConnected(client.ID, true)
 	// notify
-	cm.cfg.Presence.JoinRoom(context.Background(), client.RoomID, client.ID)
+	cm.cfg.Presence.JoinRoom(context.Background(), client.RoomID, client.ID, client.Nickname)
 	cm.cfg.Broker.PublishRoomUpdate(context.Background(), client.RoomID, domain.Event{
 		Type:     domain.PlayerReconnectedEvent,
 		CliendID: client.ID,
@@ -121,6 +121,7 @@ func (cm *ConnectionManager) HandleReconnection(client *domain.LocalClient) erro
 			Reason:  "Room doesn't exist",
 		})
 	}
+	msg.PlayerID = client.ID
 	msg.IsOwner = room.OwnerID == client.ID
 	msg.RoomID = room.ID
 	msg.Started = room.Started
@@ -147,14 +148,17 @@ func (cm *ConnectionManager) HandleReconnection(client *domain.LocalClient) erro
 			if c.ID == client.ID {
 				continue
 			}
-			players[c.ID] = game.Player{ID: c.ID}
+			players[c.ID] = game.Player{
+				ID: c.ID,
+				Nickname: c.Nickname,
+			}
 		}
 		msg.Players = players
 	}
-	fmt.Printf("SENDING STATE: %v\n", msg.IsOwner)
-	bytes, err := json.Marshal(msg)
-	fmt.Println(err)
-	fmt.Println(string(bytes))
+	// fmt.Printf("SENDING STATE: %v\n", msg.IsOwner)
+	// bytes, err := json.Marshal(msg)
+	// fmt.Println(err)
+	// fmt.Println(string(bytes))
 	return domain.SendJSON(client, msg)
 }
 

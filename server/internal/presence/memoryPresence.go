@@ -72,11 +72,12 @@ func (p *MemoryPresence) GetActiveRoomMembers(ctx context.Context, roomID uuid.U
 	return clients, nil
 }
 
-func (p *MemoryPresence) JoinRoom(ctx context.Context, roomID uuid.UUID, clientID uuid.UUID) error {
+func (p *MemoryPresence) JoinRoom(ctx context.Context, roomID uuid.UUID, clientID uuid.UUID, nickname string) error {
 	if err := p.SetClient(ctx, clientID, PresenceClient{
 		ID:             clientID,
 		RoomID:         roomID,
 		Connected:      true,
+		Nickname: nickname,
 	}); err != nil {
 		return err
 	}

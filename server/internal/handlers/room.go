@@ -50,7 +50,7 @@ func (h *RoomHandler) HandleCreateRoom(client *domain.LocalClient, rawMsg json.R
 		return err
 	}
 
-	if err := h.config.Presence.JoinRoom(context.Background(), newRoom.ID, client.ID); err != nil {
+	if err := h.config.Presence.JoinRoom(context.Background(), newRoom.ID, client.ID, client.Nickname); err != nil {
 		return err
 	}
 
@@ -104,7 +104,7 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 	}
 	client.RoomID = joinedRoom.ID
 
-	if err := h.config.Presence.JoinRoom(context.Background(), joinedRoom.ID, client.ID); err != nil {
+	if err := h.config.Presence.JoinRoom(context.Background(), joinedRoom.ID, client.ID, client.Nickname); err != nil {
 		return err
 	}
 

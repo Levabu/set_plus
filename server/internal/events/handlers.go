@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"log"
 	// "log"
 	"server/internal/domain"
 
@@ -66,10 +67,11 @@ func (h *RoomEventHandler) handleReconnectedPlayer(roomID uuid.UUID, event domai
 	h.config.LocalClients.SetClientConnected(event.CliendID, true)
 
 	msg := domain.ReconnectedToRoomMessage{
-		BaseOutMessage: domain.BaseOutMessage{Type: domain.LeftRoom},
+		BaseOutMessage: domain.BaseOutMessage{Type: domain.ReconnectedToRoom},
+		RoomID: roomID,
 		PlayerID:       event.CliendID,
 	}
-
+	log.Printf("RECON MSG: %v\n", msg)
 	return h.BroadcastToRoom(context.Background(), roomID, msg, h.config.LocalClients)
 }
 

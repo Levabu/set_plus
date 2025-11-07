@@ -7,7 +7,7 @@ import (
 )
 
 type Presence interface {
-	JoinRoom(ctx context.Context, roomID uuid.UUID, clientID uuid.UUID) error
+	JoinRoom(ctx context.Context, roomID uuid.UUID, clientID uuid.UUID, nickname string) error
 	LeaveRoom(ctx context.Context, clientID uuid.UUID) error
 	GetActiveRoomMembersIDs(ctx context.Context, roomID uuid.UUID) ([]uuid.UUID, error)
 	GetActiveRoomMembers(ctx context.Context, roomID uuid.UUID) ([]PresenceClient, error)
@@ -25,5 +25,6 @@ type PresenceClient struct {
 	ID             uuid.UUID `json:"id"`
 	RoomID         uuid.UUID `json:"roomID,omitempty"`
 	Connected      bool      `json:"connected"`
+	Nickname       string    `json:"nickname"`
 	DisconnectedAt int64     `json:"lastSeen"` // Unix timestamp
 }
