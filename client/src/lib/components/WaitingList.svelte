@@ -6,12 +6,13 @@
 		roomMembers: RoomMember[];
 	}
 	let { playerID, roomMembers }: Props = $props();
+	let activeMembers = $derived(roomMembers.filter(member => member.isConnected));
 </script>
 
 <div class="list-wrapper">
-	<h3>Players in Room ({roomMembers.length})</h3>
+	<h3>Players in Room ({activeMembers.length})</h3>
 	<ul>
-		{#each roomMembers as player (player.id)}
+		{#each activeMembers as player (player.id)}
 			<li class="player-item" class:current-player={player.id === playerID}>
 				<div class="player-info">
 					<span class="player-nickname">{player.nickname}</span>

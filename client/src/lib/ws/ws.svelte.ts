@@ -1,6 +1,6 @@
 import { GameVersions, ROTATIONS, type GameVersion, type GameVersionKey } from "$lib/engine/types";
 import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
-import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage, type ErrorMessage, type RoomMember } from "./messages";
+import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage, type ErrorMessage, type RoomMember, type LeftRoomMessage } from "./messages";
 import { replaceState } from "$app/navigation"
 import { Session } from "$lib/utils/sessions";
 
@@ -87,6 +87,9 @@ export class WS {
       case IN_MESSAGES.JOINED_ROOM:
         this.handleJoinedRoomMessage(message as JoinedRoomMessage);
         break;
+      case IN_MESSAGES.LEFT_ROOM:
+        this.handleLeftRoomMessage(message as LeftRoomMessage);
+        break;
       case IN_MESSAGES.STARTED_GAME:
         this.handleStartedGameMessage(message as StartedGameMessage);
         break;
@@ -134,6 +137,13 @@ export class WS {
     this.playerID = message.playerID;
     new Session(message.roomID).save(message.playerID, message.nickname)
     replaceState(`/multi?roomID=${this.roomID}`, {});
+  }
+
+  handleLeftRoomMessage(message: LeftRoomMessage): void {
+    const index = this.roomMembers.findIndex((member) => member.id === message.playerID);
+    if (index !== -1) {
+      this.roomMembers[index].isConnected = false;
+    }
   }
 
   handleStartedGameMessage(message: StartedGameMessage): void {

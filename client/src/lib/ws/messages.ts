@@ -46,6 +46,7 @@ export type OutMessage =
 export const IN_MESSAGES = {
   CREATED_ROOM: 'CREATED_ROOM',
   JOINED_ROOM: 'JOINED_ROOM',
+  LEFT_ROOM: 'LEFT_ROOM',
   STARTED_GAME: 'STARTED_GAME',
   CHECK_SET_RESULT: 'CHECK_SET_RESULT',
   CHANGED_GAME_STATE: 'CHANGED_GAME_STATE',
@@ -76,6 +77,11 @@ export interface JoinedRoomMessage {
   roomID: string;
   playerID: string;
   nickname: string;
+}
+
+export interface LeftRoomMessage {
+  readonly type: typeof IN_MESSAGES.LEFT_ROOM;
+  playerID: string;
 }
 
 export interface CheckSetResultMessage {
@@ -110,6 +116,7 @@ export type InMessage =
     | StartedGameMessage
     | CreatedRoomMessage
     | JoinedRoomMessage
+    | LeftRoomMessage
     | CheckSetResultMessage
     | ChangedGameStateMessage
     | GameOverMessage
