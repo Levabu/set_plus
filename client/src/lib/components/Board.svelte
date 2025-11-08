@@ -23,14 +23,15 @@
     return total - discarded - gameState.inPlayCards.length
   })())
 	
-  let isModalOpen = $derived<boolean>(!ws?.game?.hasGameStarted)
+  let isModalOpen = $state<boolean>(false)
+  let isReconnectingToOngoingGame = $state<boolean>(false)
   let joinRoomID = $state("")
 	let roomLink = $state("")
 	let roomLinkError = $state("")
   let modalButtonText = $derived((() => {
 		if (joinRoomID && !roomLink && !ws?.roomID) return "Create Room"
     if (joinRoomID && !ws?.playerID) return "Join Room"
-		if (ws?.playerID && ws.isRoomOwner && !gameState?.hasGameStarted) return "Start Game"
+		if (ws?.playerID && ws.isRoomOwner && !ws?.started) return "Start Game"
     if (joinRoomID && ws?.playerID) return "Waiting for the game to start..."
 		if (!joinRoomID && !ws?.playerID && roomLink) return "Join Room"
     if (!ws?.roomID) return "Create Room"
@@ -40,17 +41,25 @@
 	let nicknameError = $state("")
 	let isButtonDisabled = $derived(!ws?.isRoomOwner && Boolean(joinRoomID && ws?.playerID) || !!nicknameError)
 
-  // $inspect({
-  //   playerID: gameState?.playerID,
-  //   wsplayerID: ws?.playerID,
-  //   started: gameState?.hasGameStarted,
-  //   deck: gameState?.deck
-  // })
+	$effect(() => {
+		if (ws?.started) {
+			isModalOpen = false
+			isReconnectingToOngoingGame = false
+		}
+
+		if (!ws?.started && !isReconnectingToOngoingGame) {
+			isModalOpen = true
+		}
+	})
+
   $effect(() => {
 		let clientID: string | null = null
 		if (joinRoomID) {
 			const session = new Session(joinRoomID).load()
-			if (session !== null) clientID = session.clientID
+			if (session !== null) {
+				clientID = session.clientID
+				isReconnectingToOngoingGame = session.gameStarted === true
+			}
 		}
 		ws = new WS("ws://localhost:8080/ws", clientID)
 
@@ -64,7 +73,6 @@
     if (!window || !page || joinRoomID) return
 		const roomID = page.url.searchParams.get("roomID")
     if (roomID) {
-      console.log("roomID", roomID)
       joinRoomID = roomID
       roomLink = page.url.href + `/?roomID=${roomID}`
     }
@@ -142,7 +150,8 @@
 </script>
 
 <svelte:window {onkeydown} />
-<Modal open={isModalOpen}>
+{#if (!ws?.started && !isReconnectingToOngoingGame)}
+<Modal bind:open={isModalOpen}>
 	<div class="modal-inner">
 		{#if !joinRoomID}
 			<div class="select-game">
@@ -179,8 +188,9 @@
 		</div>
 	</div>
 </Modal>
+{/if}
 
-{#if gameState?.hasGameStarted}
+{#if ws?.started && gameState}
 	<div class="game-info">
 		<span>Cards In Play: {gameState.inPlayCards.length}</span>
     <span>Cards Left: {cardsLeft}</span>

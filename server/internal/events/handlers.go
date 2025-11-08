@@ -2,8 +2,6 @@ package events
 
 import (
 	"context"
-	"log"
-	// "log"
 	"server/internal/domain"
 
 	"github.com/google/uuid"
@@ -71,7 +69,7 @@ func (h *RoomEventHandler) handleReconnectedPlayer(roomID uuid.UUID, event domai
 		RoomID: roomID,
 		PlayerID:       event.CliendID,
 	}
-	log.Printf("RECON MSG: %v\n", msg)
+
 	return h.BroadcastToRoom(context.Background(), roomID, msg, h.config.LocalClients)
 }
 

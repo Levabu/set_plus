@@ -9,15 +9,16 @@ export class Session {
     return `session:${this.roomID}`;
   }
 
-  save(clientID: string, nickname: string): void {
+  save(clientID: string, nickname: string, gameStarted: boolean = false): void {
     const sessionData = {
       clientID,
-      nickname
+      nickname,
+      gameStarted
     };
     localStorage.setItem(this.getSessionKey(), JSON.stringify(sessionData));
   }
 
-  load(): { clientID: string; nickname: string } | null {
+  load(): { clientID: string; nickname: string; gameStarted?: boolean } | null {
     const sessionData = localStorage.getItem(this.getSessionKey());
     if (sessionData) {
       return JSON.parse(sessionData);

@@ -136,7 +136,7 @@ func (cm *ConnectionManager) HandleReconnection(client *domain.LocalClient) erro
 			})
 		}
 		msg.GameVersion = game.GameVersion
-		msg.Deck = game.Deck
+		msg.Deck = game.GetVisibleCards()
 		msg.Players = *game.Players
 	} else {
 		activeClients, err := cm.cfg.Presence.GetActiveRoomMembers(context.Background(), room.ID)

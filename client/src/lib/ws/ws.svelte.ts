@@ -1,4 +1,4 @@
-import { GameVersions, ROTATIONS, type GameVersion, type GameVersionKey } from "$lib/engine/types";
+import { GameVersions, ROTATIONS, type GameVersionKey } from "$lib/engine/types";
 import { MultiPlayerGameState } from "$lib/state/MultiPlayerGameState.svelte";
 import { type OutMessage, type InMessage, OUT_MESSAGES, type StartGameMessage, IN_MESSAGES, type CreatedRoomMessage, type JoinedRoomMessage, type StartedGameMessage, type CheckSetResultMessage, type ChangedGameStateMessage, type GameOverMessage, type CheckSetMessage, type ErrorMessage, type RoomMember, type LeftRoomMessage, type ReconnectedToRoomMessage, type SendStateToReconnectedMessage } from "./messages";
 import { replaceState } from "$app/navigation"
@@ -23,6 +23,7 @@ export class WS {
     roomLink: ""
   })
   roomMembers: RoomMember[] = $state([])
+  started: boolean = $state(false);
 
   constructor(url: string, clientID: string | null = null) {
     let ws = new WebSocket(
@@ -118,7 +119,6 @@ export class WS {
   }
 
   handleCreatedRoomMessage(message: CreatedRoomMessage): void {
-    console.log("Room created with ID:", message.roomID);
     this.roomID = message.roomID;
     this.playerID = message.playerID;
     this.isRoomOwner = true
@@ -132,7 +132,6 @@ export class WS {
   }
 
   handleJoinedRoomMessage(message: JoinedRoomMessage): void {
-    console.log("Joined room:", message.roomID, "as player:", message.playerID);
     this.roomMembers.push({
       id: message.playerID,
       nickname: message.nickname,
@@ -156,16 +155,13 @@ export class WS {
     // received by other players, not the reconnected client
     const session = new Session(message.roomID).load();
     if ((session && session.clientID === message.playerID) || (this.playerID === message.playerID)) return
-    console.log("Player reconnected:", message.playerID);
     const index = this.roomMembers.findIndex((member) => member.id === message.playerID);
-    console.log ("Reconnected player index:", index);
     if (index !== -1) {
       this.roomMembers[index].isConnected = true;
     }
   }
 
   handleSendStateToReconnectedMessage(message: SendStateToReconnectedMessage): void {
-    console.log("Restoring state for reconnected player:", message.playerID);
     const session = new Session(message.roomID).load();
     if (!session || session.clientID !== message.playerID) return
     this.playerID = message.playerID
@@ -188,15 +184,14 @@ export class WS {
     if (message.started) {
       const gameVersion = GameVersions[message.gameVersion!]
       if (!gameVersion) return
-      this.game = new MultiPlayerGameState(gameVersion)
+      const game  = new MultiPlayerGameState(gameVersion)
       if (message.gameID) {
-        this.game.id = message.gameID;
+        game.id = message.gameID;
       }
-      this.game.hasGameStarted = true;
-      this.game.playerID = this.playerID
-       
+      game.playerID = this.playerID
+      
       if (message.deck) {
-        this.game.deck = message.deck.map((card: any) => ({
+        game.deck = message.deck.map((card: any) => ({
           id: card.id,
           isVisible: card.isVisible,
           isSelected: card.isSelected,
@@ -208,7 +203,10 @@ export class WS {
           rotation: card.rotation || ROTATIONS.vertical,
         }));
       }
-      this.game.players = message.players
+      game.players = message.players
+      this.game = game;
+      this.started = true;
+      new Session(this.roomID).save(this.playerID, session.nickname, true);
     }
   }
 
@@ -216,12 +214,11 @@ export class WS {
     if (this.game) return
     const gameVersion = GameVersions[message.gameVersion]
     if (!gameVersion) return
-    this.game = new MultiPlayerGameState(gameVersion)
-    this.game.id = message.gameID;
-    this.game.hasGameStarted = true;
-    this.game.playerID = this.playerID
+    const game = new MultiPlayerGameState(gameVersion)
+    game.id = message.gameID;
+    game.playerID = this.playerID
 
-    this.game.deck = message.deck.map((card: any) => ({
+    game.deck = message.deck.map((card: any) => ({
       id: card.id,
       isVisible: card.isVisible,
       isSelected: card.isSelected,
@@ -232,7 +229,13 @@ export class WS {
       shading: card.shading,
       rotation: card.rotation || ROTATIONS.vertical,
     }));
-    this.game.players = message.players
+    game.players = message.players
+    this.game = game;
+    this.started = true;
+    const session = new Session(this.roomID).load();
+    if (session) {
+      new Session(this.roomID).save(this.playerID, session.nickname, true);
+    }
   }
 
   handleStartGame(gameVersion: GameVersionKey): void {
@@ -253,7 +256,6 @@ export class WS {
   }
 
   send(message: OutMessage) {
-    console.log("Sending message:", message);
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(message));
     } else {

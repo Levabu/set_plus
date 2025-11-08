@@ -5,7 +5,6 @@ import { GameState } from "./GameState.svelte";
 export class MultiPlayerGameState extends GameState {
   playerID: string = $state("");
   players: Record<string, Player> = $state({});
-  hasGameStarted: boolean = $state(false);
   score = $derived((() => {
     const player = this.players[this.playerID];
     return player ? player.score : 0;
