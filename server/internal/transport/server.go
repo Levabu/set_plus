@@ -44,8 +44,17 @@ func (s *Server) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		if client.Conn != nil {
 			client.Conn.Close()
 		}
-		client.Conn = conn
-		client.WriteChan = make(chan interface{}, 256)
+		reconnectedClient := domain.LocalClient{
+			ID: client.ID,
+			Conn: conn,
+			WriteChan: make(chan interface{}, 256),
+			RoomID: client.RoomID,
+			Nickname: client.Nickname,
+			Connected: false,
+			DisconnectedAt: client.DisconnectedAt,
+			ReconnectTimer: client.ReconnectTimer,
+		}
+		client = &reconnectedClient
 	} else {
 		client = &domain.LocalClient{
 			ID:   uuid.New(),

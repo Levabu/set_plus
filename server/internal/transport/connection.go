@@ -9,7 +9,6 @@ import (
 	"server/internal/domain"
 	"server/internal/game"
 
-	// "server/internal/presence"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,9 +31,8 @@ func (cm *ConnectionManager) HandleConnection(client *domain.LocalClient) {
 	defer client.Conn.Close()
 	defer close(client.WriteChan)
 
-	if client.Connected {
-		cm.cfg.LocalClients.Add(client)
-	} else {
+	cm.cfg.LocalClients.Set(client)
+	if !client.Connected {
 		cm.HandleReconnection(client)
 	}
 
@@ -76,7 +74,6 @@ func (cm *ConnectionManager) HandleDisconnection(client *domain.LocalClient) err
 		})
 	}
 
-	// set timer for local cleanup
 	if client.ReconnectTimer != nil {
 		client.ReconnectTimer.Stop()
 	}
@@ -149,16 +146,12 @@ func (cm *ConnectionManager) HandleReconnection(client *domain.LocalClient) erro
 				continue
 			}
 			players[c.ID] = game.Player{
-				ID: c.ID,
+				ID:       c.ID,
 				Nickname: c.Nickname,
 			}
 		}
 		msg.Players = players
 	}
-	// fmt.Printf("SENDING STATE: %v\n", msg.IsOwner)
-	// bytes, err := json.Marshal(msg)
-	// fmt.Println(err)
-	// fmt.Println(string(bytes))
 	return domain.SendJSON(client, msg)
 }
 

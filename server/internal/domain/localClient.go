@@ -20,7 +20,7 @@ type LocalClient struct {
 }
 
 type LocalClientManager interface {
-	Add(client *LocalClient)
+	Set(client *LocalClient)
 	Get(id uuid.UUID) *LocalClient
 	Remove(id uuid.UUID)
 	GetAll() map[uuid.UUID]*LocalClient
@@ -40,7 +40,7 @@ func NewLocalClients() *LocalClients {
 	}
 }
 
-func (c *LocalClients) Add(client *LocalClient) {
+func (c *LocalClients) Set(client *LocalClient) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.clients[client.ID] = client
