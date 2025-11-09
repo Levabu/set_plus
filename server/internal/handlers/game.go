@@ -7,6 +7,7 @@ import (
 	"server/internal/config"
 	"server/internal/domain"
 	"server/internal/game"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -154,7 +155,6 @@ func (h *GameHandler) HandleCheckSet(client *domain.LocalClient, rawMsg json.Raw
 	var eventType domain.EventType
 	if gameOver {
 		eventType = domain.GameOverEvent
-		h.config.Store.CleanupAfterGame(context.Background(), gameState.GameID)
 	} else {
 		eventType = domain.GameStateChangedEvent
 	}
@@ -163,6 +163,13 @@ func (h *GameHandler) HandleCheckSet(client *domain.LocalClient, rawMsg json.Raw
 		Type:     eventType,
 		CliendID: client.ID,
 	})
+
+	if gameOver {
+		go func() {
+			time.Sleep(time.Second * 3)
+			h.config.Store.CleanupAfterGame(context.Background(), gameState.GameID)
+		} ()
+	}
 
 	return nil
 }

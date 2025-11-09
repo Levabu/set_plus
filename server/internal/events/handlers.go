@@ -60,7 +60,6 @@ func (h *RoomEventHandler) handleReconnectedPlayer(roomID uuid.UUID, event domai
 }
 
 func (h *RoomEventHandler) handleStartedGame(roomID uuid.UUID, event domain.Event) error {
-	// Get room and game state
 	gameRoom, err := h.config.Store.GetRoom(context.Background(), roomID)
 	if err != nil {
 		return err
@@ -83,7 +82,6 @@ func (h *RoomEventHandler) handleStartedGame(roomID uuid.UUID, event domain.Even
 }
 
 func (h *RoomEventHandler) handleChangedGameState(roomID uuid.UUID, event domain.Event) error {
-	// Get room and game state
 	gameRoom, err := h.config.Store.GetRoom(context.Background(), roomID)
 	if err != nil {
 		return err
@@ -105,7 +103,6 @@ func (h *RoomEventHandler) handleChangedGameState(roomID uuid.UUID, event domain
 }
 
 func (h *RoomEventHandler) handleGameOver(roomID uuid.UUID, event domain.Event) error {
-	// Get room and game state
 	gameRoom, err := h.config.Store.GetRoom(context.Background(), roomID)
 	if err != nil {
 		return err
