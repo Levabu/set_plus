@@ -143,6 +143,7 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 	err = h.config.Broker.PublishRoomUpdate(context.Background(), joinedRoom.ID, domain.Event{
 		Type:     domain.PlayerJoinedEvent,
 		CliendID: client.ID,
+		Data: map[string]string{"nickname": client.Nickname},
 	})
 	if err != nil {
 		return err

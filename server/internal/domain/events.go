@@ -16,4 +16,5 @@ const (
 type Event struct {
 	Type     EventType `json:"type"`
 	CliendID uuid.UUID `json:"clientID"`
+	Data map[string]string `json:"data"`
 }
