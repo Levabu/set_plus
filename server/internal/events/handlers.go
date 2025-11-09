@@ -50,8 +50,6 @@ func (h *RoomEventHandler) handleDisconnectedPlayer(roomID uuid.UUID, event doma
 }
 
 func (h *RoomEventHandler) handleReconnectedPlayer(roomID uuid.UUID, event domain.Event) error {
-	h.config.LocalClients.SetClientConnected(event.CliendID, true)
-
 	msg := domain.ReconnectedToRoomMessage{
 		BaseOutMessage: domain.BaseOutMessage{Type: domain.ReconnectedToRoom},
 		RoomID: roomID,
