@@ -79,6 +79,7 @@ export interface JoinedRoomMessage {
   roomID: string;
   playerID: string;
   nickname: string;
+  players: Player[];
 }
 
 export interface LeftRoomMessage {

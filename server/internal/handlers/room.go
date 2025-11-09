@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"server/internal/config"
 	"server/internal/domain"
 	"server/internal/events"
+	"server/internal/game"
 
 	"github.com/google/uuid"
 )
@@ -108,36 +108,28 @@ func (h *RoomHandler) HandleJoinRoom(client *domain.LocalClient, rawMsg json.Raw
 		return err
 	}
 
+	players := make([]game.Player, 0)
+	activeClients, err := h.config.Presence.GetActiveRoomMembers(context.Background(), joinedRoom.ID)
+	if err == nil {
+		for _, c := range activeClients {
+			if c.ID == client.ID {
+				continue
+			}
+			players = append(players, game.Player{
+				ID: c.ID,
+				Nickname: c.Nickname,
+			})
+		}
+	}
+
 	// Send response to the joining client first
 	domain.SendJSON(client, domain.JoinedRoomMessage{
 		BaseOutMessage: domain.BaseOutMessage{Type: domain.JoinedRoom},
 		RoomID:         joinedRoom.ID,
 		PlayerID:       client.ID,
 		Nickname:       msg.Nickname,
+		Players: players,
 	})
-
-	// Send existing room members to the newly joined player
-	existingMembers, err := h.config.Presence.GetActiveRoomMembersIDs(context.Background(), joinedRoom.ID)
-	if err == nil {
-		for _, memberID := range existingMembers {
-			// Don't send the player their own join message again
-			if memberID == client.ID {
-				continue
-			}
-			memberClient := h.config.LocalClients.Get(memberID)
-			if memberClient != nil {
-				// Send info about existing member to the new player
-				domain.SendJSON(client, domain.JoinedRoomMessage{
-					BaseOutMessage: domain.BaseOutMessage{Type: domain.JoinedRoom},
-					RoomID:         joinedRoom.ID,
-					PlayerID:       memberID,
-					Nickname:       memberClient.Nickname,
-				})
-			}
-		}
-	}
-
-	log.Printf("Player %s (%s) joined room %s", client.ID, client.Nickname, joinedRoom.ID)
 
 	// Publish room event to notify other members
 	err = h.config.Broker.PublishRoomUpdate(context.Background(), joinedRoom.ID, domain.Event{

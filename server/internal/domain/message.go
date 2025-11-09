@@ -72,9 +72,10 @@ type CreatedRoomMessage struct {
 
 type JoinedRoomMessage struct {
 	BaseOutMessage
-	RoomID   uuid.UUID `json:"roomID"`
-	PlayerID uuid.UUID `json:"playerID"`
-	Nickname string    `json:"nickname"`
+	RoomID   uuid.UUID     `json:"roomID"`
+	PlayerID uuid.UUID     `json:"playerID"`
+	Nickname string        `json:"nickname"`
+	Players  []game.Player `json:"players"`
 }
 
 type LeftRoomMessage struct {

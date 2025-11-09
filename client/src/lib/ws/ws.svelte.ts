@@ -140,6 +140,14 @@ export class WS {
     if (this.playerID) return
     this.roomID = message.roomID;
     this.playerID = message.playerID;
+    for (const player of message.players) {
+      if (player.id === this.playerID) continue
+      this.roomMembers.push({
+        id: player.id,
+        nickname: player.nickname,
+        isConnected: true,
+      })
+    }
     new Session(message.roomID).save(message.playerID, message.nickname)
     replaceState(`/multi?roomID=${this.roomID}`, {});
   }
