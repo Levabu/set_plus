@@ -78,8 +78,6 @@ func (cm *ConnectionManager) HandleDisconnection(client *domain.LocalClient) err
 		client.ReconnectTimer.Stop()
 	}
 	client.ReconnectTimer = time.AfterFunc(cm.cfg.DisconnectedClientTTL, func() {
-		time.Sleep(cm.cfg.DisconnectedClientTTL)
-
 		client := cm.cfg.LocalClients.Get(clientID)
 		if client == nil || client.Connected || time.Since(client.DisconnectedAt) < cm.cfg.DisconnectedClientTTL {
 			return

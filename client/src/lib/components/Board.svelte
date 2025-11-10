@@ -25,14 +25,17 @@
 	
   let isModalOpen = $state<boolean>(false)
   let isReconnectingToOngoingGame = $state<boolean>(false)
-  let joinRoomID = $state("")
-	let roomLink = $state("")
+  let joinRoomID = $state(page?.url.searchParams.get("roomID") || "")
+	let roomLink = $state((() => {
+		if (joinRoomID) return page.url.href + `/?roomID=${joinRoomID}`
+		return ""
+		})())
 	let roomLinkError = $state("")
   let modalButtonText = $derived((() => {
 		if (joinRoomID && !roomLink && !ws?.roomID) return "Create Room"
     if (joinRoomID && !ws?.playerID) return "Join Room"
 		if (ws?.playerID && ws.isRoomOwner && !ws?.started) return "Start Game"
-    if (joinRoomID && ws?.playerID) return "Waiting for the game to start..."
+    if (ws?.playerID && !ws.isRoomOwner) return "Waiting for the game to start..."
 		if (!joinRoomID && !ws?.playerID && roomLink) return "Join Room"
     if (!ws?.roomID) return "Create Room"
     return "Start Game"
@@ -66,15 +69,6 @@
     return () => {
       ws?.socket?.close(1000)
 			ws = null
-    }
-  })
-
-  $effect(() => {
-    if (!window || !page || joinRoomID) return
-		const roomID = page.url.searchParams.get("roomID")
-    if (roomID) {
-      joinRoomID = roomID
-      roomLink = page.url.href + `/?roomID=${roomID}`
     }
   })
 
