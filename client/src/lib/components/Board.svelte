@@ -12,6 +12,7 @@
 	import WaitingList from "./WaitingList.svelte";
 	import { page } from "$app/state";
 	import { Session } from "$lib/utils/sessions";
+	import { remountKey } from "$lib/state/remountKey.svelte";
 
   let ws = $state<WS | null>(null);
   let gameState = $derived<MultiPlayerGameState | null>(ws?.game || null);
@@ -200,6 +201,54 @@
 			/>
 		{/each}
 	</div>
+
+	{#if ws && ws.game && ws.game.isOver}
+		<Modal open={true}>
+			<div class="modal-inner">
+				<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">
+				{#if ws.game.winnerIDs.length == 1}
+					{#if ws.game.winnerIDs[0] === ws.playerID}
+					You won!
+					{:else}
+					You lost! The winner is {ws.game.players[ws.game.winnerIDs[0]].nickname}.
+					{/if}
+				{/if}
+
+				{#if ws.game.winnerIDs.length > 1}
+					{#if ws.game.winnerIDs.includes(ws.playerID)}
+						Tie! You are one of the winners.
+					{:else}
+						You lost!
+					{/if}
+				{/if}
+				</h2>
+
+				<div class="results">
+					<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Results:</h3>
+					<ul class="list-disc list-inside">
+						{#each Object.values(ws.roomMembers).sort((a, b) => {
+							const p1 = ws?.game!.players[a.id];
+							const p2 = ws?.game!.players[b.id];
+							return (p2?.score ?? 0) - (p1?.score ?? 0);
+						}) as player}
+							<li class="mb-1 font-semibold text-gray-900 dark:text-gray-100">
+								<span>{player.nickname}</span>
+								<span>{ws?.game.players[player.id].score}</span>
+							</li>
+						{/each}
+					</ul>
+				</div>
+
+				<div class="footer">
+					<button onclick={() => {
+						remountKey.val += 1;
+					}} class="button">
+						Play Again
+					</button>
+				</div>
+			</div>
+		</Modal>
+		{/if}
 {/if}
 
 <style>
@@ -272,4 +321,11 @@
 	cursor: not-allowed;
 	pointer-events: none;
 }
+
+	.results ul li {
+		display: flex;
+		justify-content: space-between;
+	}
+
+
 </style>

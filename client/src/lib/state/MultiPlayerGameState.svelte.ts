@@ -10,6 +10,17 @@ export class MultiPlayerGameState extends GameState {
     return player ? player.score : 0;
   })())
   isOver: boolean = $state(false);
+  winnerIDs: string[] = $derived.by(() => {
+    if (!this.isOver) return [];
+    let maxScore = -Infinity;
+    for (const playerID in this.players) {
+      const player = this.players[playerID];
+      if (player.score > maxScore) {
+        maxScore = player.score;
+      }
+    }
+    return  Object.values(this.players).filter(player => player.score === maxScore).map(player => player.id);
+  })
 
   constructor(gameVersion: GameVersion) {
     super(gameVersion);
@@ -56,7 +67,5 @@ export class MultiPlayerGameState extends GameState {
       rotation: card.rotation || ROTATIONS.vertical,
     }));
     this.players = message.players
-    console.log("Game over! Final scores:", message.players);
-    alert("Game Over!")
   }
 }
