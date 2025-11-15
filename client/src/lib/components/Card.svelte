@@ -19,7 +19,7 @@
         shape={card.shape}
         color={card.color}
         shading={card.shading}
-        rotation={card.rotation || "horizontal"}
+        rotation={card.rotation || "vertical"}
       />
   {/each}
 </button>

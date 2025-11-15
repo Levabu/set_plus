@@ -1,10 +1,13 @@
 <script lang="ts">
 	import Board from "$lib/components/Board.svelte";
+	import { remountKey } from "$lib/state/remountKey.svelte";
 </script>
 
+{#key remountKey.val}
 <div class="page">
     <Board />
 </div>
+{/key}
 
 <style>
   .page {

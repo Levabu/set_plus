@@ -236,6 +236,10 @@
 		gap: 2rem;
 	}
 
+	.select-game h3 {
+    margin-bottom: 1rem;
+  }
+
 	.modal-inner .footer {
 		display: flex;
 		justify-content: center;
